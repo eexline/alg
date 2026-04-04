@@ -396,7 +396,7 @@ h1 {
   /* высота шапки: padding-top (10 + safe) + блок заголовка 64px */
   top: calc(74px + var(--safe-area-top));
   /* футер: ряд табов + нижний отступ внутри .dashFooterFixed (уже с safe-area) */
-  bottom: calc(56px + 12px + var(--safe-area-bottom));
+  bottom: calc(56px + 6px + var(--safe-area-bottom));
   left: 0;
   right: 0;
   overflow-y: auto;
@@ -483,7 +483,7 @@ h1 {
 
   .dashContent {
     top: calc(76px + var(--safe-area-top));
-    bottom: calc(58px + 12px + var(--safe-area-bottom));
+    bottom: calc(58px + 6px + var(--safe-area-bottom));
     padding: 12px 16px 14px;
   }
 
@@ -1725,7 +1725,7 @@ h1 {
   box-sizing: border-box;
   z-index: 20;
   /* safe-area снизу — часть футера, тот же градиент до самого края экрана */
-  padding: 0 0 calc(12px + var(--safe-area-bottom));
+  padding: 0 0 calc(6px + var(--safe-area-bottom));
   background: linear-gradient(180deg, #181b22 0%, #11141a 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.065);
   box-shadow:
