@@ -2,11 +2,51 @@ export function getTelegramWebApp() {
   return typeof window !== "undefined" ? window.Telegram?.WebApp : null;
 }
 
+/** Maximize Mini App height + fullscreen where the client supports it (Bot API 7.10+). */
+function maximizeTelegramViewport(tg) {
+  if (!tg) return;
+  try {
+    tg.ready();
+  } catch {
+    /* ignore */
+  }
+  try {
+    tg.expand?.();
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof tg.requestFullscreen === "function") {
+      tg.requestFullscreen();
+    }
+  } catch {
+    /* older clients / policy */
+  }
+  try {
+    tg.disableVerticalSwipes?.();
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (!tg.__autotradeViewportHooked) {
+      tg.__autotradeViewportHooked = true;
+      tg.onEvent?.("viewportChanged", () => {
+        try {
+          tg.expand?.();
+        } catch {
+          /* ignore */
+        }
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getInitData() {
   const tg = getTelegramWebApp();
   if (!tg) return "";
-  tg.ready();
-  tg.expand?.();
+  maximizeTelegramViewport(tg);
   return tg.initData || "";
 }
 
@@ -30,20 +70,13 @@ export function getTelegramUser() {
 }
 
 export function prepareTelegramWebAppViewport() {
-  const tg = getTelegramWebApp();
-  if (!tg) return;
-  tg.ready();
-  tg.expand?.();
-  // Helps keep app in expanded state on mobile gestures.
-  tg.disableVerticalSwipes?.();
+  maximizeTelegramViewport(getTelegramWebApp());
 }
 
 export function applyTheme() {
   const tg = getTelegramWebApp();
   if (!tg) return;
-  tg.ready();
-  tg.expand?.();
-  tg.disableVerticalSwipes?.();
+  maximizeTelegramViewport(tg);
   if (!tg?.themeParams?.bg_color) return;
   document.documentElement.style.setProperty("--tg-bg", tg.themeParams.bg_color);
 }
