@@ -680,16 +680,16 @@ h1 {
   font-family: inherit;
 }
 
-/* Клавиатура или фокус в поле — таб-бар полностью скрыт (не только уехал вниз) */
+/* Tab bar: smooth slide + fade; visibility после анимации, чтобы разворот был заметен */
 .dashShell.dashKeyboardOpen .dashFooterFixed {
-  visibility: hidden;
-  transform: translate3d(0, 120%, 0);
+  transform: translate3d(0, calc(100% + 12px), 0);
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
   transition:
-    visibility 0.18s ease,
-    transform 0.22s ease,
-    opacity 0.18s ease;
+    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.28s ease,
+    visibility 0s linear 0.34s;
 }
 
 .dashShell.dashKeyboardOpen .dashContent {
@@ -698,8 +698,13 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .dashFooterFixed,
+  .dashContent {
+    transition: none !important;
+  }
+
   .dashShell.dashKeyboardOpen .dashFooterFixed {
-    transition: none;
+    transition: none !important;
   }
 }
 
@@ -729,6 +734,9 @@ h1 {
   right: 0;
   overflow-y: auto;
   padding: 10px 12px 12px;
+  transition:
+    bottom 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    padding-bottom 0.38s cubic-bezier(0.32, 0.72, 0, 1);
   /* scroll works, scrollbar fully hidden (Home + Profile) */
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -2603,6 +2611,13 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.035);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.28s ease 0.04s,
+    visibility 0s linear 0s;
 }
 
 .dashTabBtn {
