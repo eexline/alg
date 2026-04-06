@@ -716,7 +716,7 @@ h1 {
   width: 100%;
   box-sizing: border-box;
   z-index: 20;
-  /* safe-area сверху входит в «толщину» шапки — тот же фон, без полосы body */
+  /* ПК: без лишнего зазора; телефоны — см. max-width ниже (+4px к safe-area) */
   padding: calc(10px + var(--safe-area-top)) 0 0;
   background: linear-gradient(180deg, #171a20 0%, #12151b 100%);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
@@ -726,10 +726,10 @@ h1 {
 
 .dashContent {
   position: absolute;
-  /* высота шапки: padding-top (10 + safe) + блок заголовка 64px */
+  /* высота шапки: padding-top (10 + safe) + блок заголовка 64px; на телефоне +4px к padding шапки */
   top: calc(74px + var(--safe-area-top));
-  /* футер: ряд табов + нижний отступ внутри .dashFooterFixed (уже с safe-area) */
-  bottom: calc(56px + 6px + var(--safe-area-bottom));
+  /* футер: min-height табов + padding снизу у .dashFooterFixed (ниже число — полоса ближе к краю экрана) */
+  bottom: calc(56px + 2px + var(--safe-area-bottom));
   left: 0;
   right: 0;
   overflow-y: auto;
@@ -746,6 +746,22 @@ h1 {
   width: 0;
   height: 0;
   background: transparent;
+}
+
+@media (max-width: 767px) {
+  .dashHeaderFixed {
+    padding: calc(14px + var(--safe-area-top)) 0 0;
+  }
+
+  .dashContent {
+    top: calc(78px + var(--safe-area-top));
+    /* таб-бар ближе к низу: без +2px, только safe-area (home indicator) */
+    bottom: calc(56px + var(--safe-area-bottom));
+  }
+
+  .dashFooterFixed {
+    padding: 0 0 var(--safe-area-bottom);
+  }
 }
 
 .dashPanel {
@@ -828,7 +844,7 @@ h1 {
 
   .dashContent {
     top: calc(76px + var(--safe-area-top));
-    bottom: calc(58px + 6px + var(--safe-area-bottom));
+    bottom: calc(58px + 2px + var(--safe-area-bottom));
     padding: 12px 16px 14px;
   }
 
@@ -2602,8 +2618,8 @@ h1 {
   width: 100%;
   box-sizing: border-box;
   z-index: 20;
-  /* safe-area снизу — часть футера, тот же градиент до самого края экрана */
-  padding: 0 0 calc(6px + var(--safe-area-bottom));
+  /* safe-area снизу — часть футера; +2px минимум над вырезом (было 6px — табы слишком «высоко») */
+  padding: 0 0 calc(2px + var(--safe-area-bottom));
   background: linear-gradient(180deg, #181b22 0%, #11141a 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.065);
   box-shadow:
