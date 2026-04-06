@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
 import { getTelegramUser } from "./telegram_init.js";
 
@@ -13,9 +13,16 @@ const emptyForm = {
 const SYMBOL_GROUPS = {
   Forex: ["EURUSD", "GBPUSD", "USDCAD", "USDJPY", "AUDUSD", "NZDUSD"],
   Metals: ["XAUUSD", "XAGUSD"],
-  Indices: ["GER40", "US30", "US100", "NASDAQ"],
+  Indices: ["GER40", "US30", "NASDAQ"],
   Crypto: ["BTCUSD", "ETHUSD"],
 };
+
+/** Keep “Connecting” UI visible at least this long (API may return faster). */
+const MIN_CONNECT_UI_MS = 3000;
+
+function sleepMs(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function ProfileFallbackIcon({ className = "" }) {
   return (
@@ -83,6 +90,23 @@ function ConnectLockIcon({ className = "" }) {
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function ConnectLinkedCheckIcon({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.35"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M 7.1 12.45 L 10.9 16.25 L 17.75 7.35" />
     </svg>
   );
 }
@@ -211,10 +235,114 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [usernameDraft, setUsernameDraft] = useState("");
   const [brokerExpanded, setBrokerExpanded] = useState(true);
   const [connectSubmitting, setConnectSubmitting] = useState(false);
+  const [connectErr, setConnectErr] = useState("");
+  const [connectErrBump, setConnectErrBump] = useState(0);
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
+  const prevBrokerExpandedRef = useRef(brokerExpanded);
+  const dashShellRef = useRef(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const tgUser = getTelegramUser();
+
+  useEffect(() => {
+    setMsg((m) => (m.trim().toLowerCase() === "linked" ? "" : m));
+  }, []);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const thresholdPx = 80;
+
+    const syncKeyboard = () => {
+      if (!vv) {
+        setKeyboardOpen(false);
+        return;
+      }
+      const layoutH = window.document.documentElement.clientHeight || window.innerHeight;
+      const gap = layoutH - vv.height - (vv.offsetTop || 0);
+      setKeyboardOpen(gap > thresholdPx);
+    };
+
+    const onFocusIn = (e) => {
+      const t = e.target;
+      if (
+        !t ||
+        !dashShellRef.current ||
+        !dashShellRef.current.contains(t) ||
+        (t.tagName !== "INPUT" && t.tagName !== "TEXTAREA" && t.tagName !== "SELECT")
+      ) {
+        return;
+      }
+      requestAnimationFrame(() => {
+        syncKeyboard();
+        window.setTimeout(syncKeyboard, 180);
+        window.setTimeout(syncKeyboard, 400);
+      });
+    };
+
+    const onFocusOut = () => {
+      window.setTimeout(syncKeyboard, 120);
+      window.setTimeout(syncKeyboard, 400);
+    };
+
+    if (vv) {
+      vv.addEventListener("resize", syncKeyboard);
+      vv.addEventListener("scroll", syncKeyboard);
+    }
+    window.addEventListener("resize", syncKeyboard);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    syncKeyboard();
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener("resize", syncKeyboard);
+        vv.removeEventListener("scroll", syncKeyboard);
+      }
+      window.removeEventListener("resize", syncKeyboard);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+
+  const tradingAccountId = useMemo(() => {
+    if (!accounts.length) return "";
+    const cur = accountId != null && String(accountId) !== "" ? String(accountId) : "";
+    if (cur && accounts.some((a) => String(a.id) === cur)) return cur;
+    return String(accounts[0].id);
+  }, [accounts, accountId]);
+
+  const brokerChangeMode = accounts.length > 0 && brokerExpanded;
+
+  useEffect(() => {
+    const prev = prevBrokerExpandedRef.current;
+    const openedChange = brokerExpanded && !prev && accounts.length > 0;
+    prevBrokerExpandedRef.current = brokerExpanded;
+
+    if (!openedChange) return undefined;
+
+    const active = sessions.find(
+      (s) =>
+        String(s.account_id) === String(tradingAccountId) &&
+        (s.state === "running" || s.state === "queued")
+    );
+    if (!active) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setErr("");
+        await api.stopTrading(active.id);
+        if (!cancelled) await load();
+      } catch (e) {
+        if (!cancelled) setErr(String(e.message || e));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [brokerExpanded, accounts.length, sessions, tradingAccountId]);
 
   async function load() {
     setErr("");
@@ -222,12 +350,19 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       const [s, b] = await Promise.all([api.sessions(), api.listBrokers()]);
       setSessions(s);
       setAccounts(b);
-      if (b.length && !accountId) setAccountId(String(b[0].id));
-      if (b.length === 0) {
+      if (b.length) {
+        setAccountId((prev) => {
+          const p = prev != null && String(prev) !== "" ? String(prev) : "";
+          const ok = p && b.some((a) => String(a.id) === p);
+          return ok ? p : String(b[0].id);
+        });
+        if (!brokerListHydrated.current) {
+          brokerListHydrated.current = true;
+          setBrokerExpanded(false);
+        }
+      } else {
+        setAccountId("");
         setBrokerExpanded(true);
-      } else if (!brokerListHydrated.current) {
-        brokerListHydrated.current = true;
-        setBrokerExpanded(false);
       }
     } catch (e) {
       setErr(String(e.message || e));
@@ -241,7 +376,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   async function start() {
     setErr("");
     try {
-      await api.startTrading(Number(accountId), selectedSymbols);
+      await api.startTrading(Number(tradingAccountId), selectedSymbols);
       await load();
     } catch (e) {
       setErr(String(e.message || e));
@@ -261,6 +396,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   async function submitBroker(e) {
     e.preventDefault();
     setErr("");
+    setConnectErr("");
     setMsg("");
     const server = form.server.trim();
     const login = form.login.trim();
@@ -272,6 +408,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     }
     setFieldErrors({ server: false, login: false, password: false });
     setConnectSubmitting(true);
+    const connectFlowStarted = performance.now();
     try {
       const brokerName = (form.broker_name || server || "Broker").trim().slice(0, 128);
       const created = await api.addBroker({
@@ -282,17 +419,25 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         password,
         risk_percent: Number(form.risk_percent),
       });
+      let elapsed = performance.now() - connectFlowStarted;
+      if (elapsed < MIN_CONNECT_UI_MS) {
+        await sleepMs(MIN_CONNECT_UI_MS - elapsed);
+      }
       if (created?.id != null) {
         setAccountId(String(created.id));
       }
       setForm(emptyForm);
-      setMsg("Linked");
       setBrokerExpanded(false);
       brokerListHydrated.current = true;
       await load();
       onRefresh?.();
     } catch (e) {
-      setErr(String(e.message || e));
+      let elapsed = performance.now() - connectFlowStarted;
+      if (elapsed < MIN_CONNECT_UI_MS) {
+        await sleepMs(MIN_CONNECT_UI_MS - elapsed);
+      }
+      setConnectErr(String(e.message || e));
+      setConnectErrBump((b) => b + 1);
     } finally {
       setConnectSubmitting(false);
     }
@@ -382,17 +527,37 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     }
     setProfileEditOpen(false);
   }
-  const selectedBrokerName = accounts.find((a) => String(a.id) === String(accountId))?.broker_name || "Demo";
-  const selectedServerName = accounts.find((a) => String(a.id) === String(accountId))?.server || "Demo";
-  const primaryAccount = accounts.find((a) => String(a.id) === String(accountId)) || accounts[0];
+
+  function cancelBrokerEdit() {
+    if (!accounts.length) return;
+    setBrokerExpanded(false);
+    setFieldErrors({ server: false, login: false, password: false });
+    setConnectErr("");
+    setForm(emptyForm);
+  }
+
+  const selectedBrokerName =
+    accounts.find((a) => String(a.id) === String(tradingAccountId))?.broker_name || "Demo";
+  const selectedServerName =
+    accounts.find((a) => String(a.id) === String(tradingAccountId))?.server || "Demo";
+  const primaryAccount =
+    accounts.find((a) => String(a.id) === String(tradingAccountId)) || accounts[0];
   const connectSummary =
     primaryAccount != null
       ? `${primaryAccount.broker_name} · ${primaryAccount.login}`
       : "";
+  const activeSessionForAccount = sessions.find(
+    (s) =>
+      String(s.account_id) === String(tradingAccountId) &&
+      (s.state === "running" || s.state === "queued")
+  );
 
   return (
     <div className="dashRoot">
-      <div className="dashShell">
+      <div
+        ref={dashShellRef}
+        className={`dashShell${keyboardOpen ? " dashKeyboardOpen" : ""}`}
+      >
         <header className="dashHeaderFixed">
           <div className="dashHeader">
             <div className="dashHeaderBrand">
@@ -404,8 +569,25 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
 
         <main className="dashContent">
           <div className="dashPanel">
-            {err && <div className="licenseErr">{err}</div>}
-            {msg && <div className="dashMsg">{msg}</div>}
+            {err ? (
+              <div className="dashPanelErr" role="alert">
+                <span className="dashPanelErrGlyph" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                    />
+                  </svg>
+                </span>
+                <div className="dashPanelErrBody">
+                  <span className="dashPanelErrLabel">Something went wrong</span>
+                  <p className="dashPanelErrText">{err}</p>
+                </div>
+              </div>
+            ) : null}
+            {msg && msg.trim().toLowerCase() !== "linked" ? (
+              <div className="dashMsg">{msg}</div>
+            ) : null}
 
             {activeTab === "profile" && (
               <div key="profile" className="dashTabPane">
@@ -607,16 +789,20 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                 <section className="dashConnectSection">
                   <div className="dashCard dashCardConnect dashCardConnectRef">
                     {accounts.length > 0 && !brokerExpanded && (
-                      <div className="dashConnectSummary dashConnectSummaryInCard">
-                        <p className="dashConnectSummaryText">
-                          Connected as <span className="dashConnectSummaryStrong">{connectSummary}</span>
-                        </p>
+                      <div className="dashConnectLinked">
+                        <span className="dashConnectLinkedMark" aria-hidden="true">
+                          <ConnectLinkedCheckIcon className="dashConnectLinkedCheckSvg" />
+                        </span>
+                        <div className="dashConnectLinkedBody">
+                          <p className="dashConnectLinkedAccount">{connectSummary}</p>
+                        </div>
                         <button
                           type="button"
-                          className="dashConnectSummaryChange"
+                          className="dashConnectLinkedAction"
                           onClick={() => {
                             setBrokerExpanded(true);
                             setMsg("");
+                            setConnectErr("");
                           }}
                         >
                           Change
@@ -625,10 +811,26 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     )}
                     {(accounts.length === 0 || brokerExpanded) && (
                       <>
-                        <div className="dashCardTitleRow dashConnectInnerTitle">
+                        <div
+                          className={`dashCardTitleRow dashConnectInnerTitle${
+                            accounts.length > 0 ? " dashConnectTitleRowWithAction" : ""
+                          }`}
+                        >
                           <h2>Connect Broker</h2>
+                          {accounts.length > 0 ? (
+                            <button
+                              type="button"
+                              className="dashConnectEditCancel"
+                              onClick={cancelBrokerEdit}
+                            >
+                              Back
+                            </button>
+                          ) : null}
                         </div>
-                        <form className="dashConnectFormStack" onSubmit={submitBroker}>
+                        <form
+                          className={`dashConnectFormStack${connectSubmitting ? " dashConnectFormConnecting" : ""}`}
+                          onSubmit={submitBroker}
+                        >
                           <div className={`dashConnectFieldGroup${fieldErrors.server ? " isInvalid" : ""}`}>
                             <div className="dashConnectInputShell dashConnectInputShellIcon">
                               <span className="dashConnectInputLeadIcon" aria-hidden>
@@ -640,7 +842,9 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                                 placeholder="Enter server"
                                 autoComplete="off"
                                 aria-label="Server"
+                                disabled={connectSubmitting}
                                 onChange={(e) => {
+                                  setConnectErr("");
                                   setFieldErrors((fe) => ({ ...fe, server: false }));
                                   setForm({ ...form, server: e.target.value });
                                 }}
@@ -658,7 +862,9 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                                 placeholder="Enter login"
                                 autoComplete="username"
                                 aria-label="Login"
+                                disabled={connectSubmitting}
                                 onChange={(e) => {
+                                  setConnectErr("");
                                   setFieldErrors((fe) => ({ ...fe, login: false }));
                                   setForm({ ...form, login: e.target.value });
                                 }}
@@ -677,7 +883,9 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                                 placeholder="Password"
                                 autoComplete="current-password"
                                 aria-label="Password"
+                                disabled={connectSubmitting}
                                 onChange={(e) => {
+                                  setConnectErr("");
                                   setFieldErrors((fe) => ({ ...fe, password: false }));
                                   setForm({ ...form, password: e.target.value });
                                 }}
@@ -686,6 +894,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                                 type="button"
                                 className="dashConnectPwToggle"
                                 aria-label={showConnectPassword ? "Hide password" : "Show password"}
+                                disabled={connectSubmitting}
                                 onClick={() => setShowConnectPassword((v) => !v)}
                               >
                                 <ConnectEyeIcon open={showConnectPassword} className="dashConnectInputSvg" />
@@ -697,14 +906,54 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                               Server, login, and password are required.
                             </div>
                           )}
+                          {connectErr ? (
+                            <div
+                              className="dashConnectErrCard"
+                              role="alert"
+                              key={connectErrBump}
+                            >
+                              <span className="dashConnectErrGlyph" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                  <path
+                                    fill="currentColor"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                  />
+                                </svg>
+                              </span>
+                              <div className="dashConnectErrBody">
+                                <span className="dashConnectErrLabel">Couldn&apos;t connect</span>
+                                <p className="dashConnectErrText">{connectErr}</p>
+                              </div>
+                            </div>
+                          ) : null}
+                          {connectSubmitting ? (
+                            <p className="dashConnectVerifyHint" aria-live="polite">
+                              <span className="dashConnectVerifyHintLead">Authorizing with broker</span>
+                              <span className="dashConnectVerifyEllipsis" aria-hidden="true">
+                                <span className="dashConnectVerifyEllipsisDot" />
+                                <span className="dashConnectVerifyEllipsisDot" />
+                                <span className="dashConnectVerifyEllipsisDot" />
+                              </span>
+                            </p>
+                          ) : null}
                           <button
-                            className="dashConnectSubmitBtn"
+                            className={`dashConnectSubmitBtn${connectSubmitting ? " dashConnectSubmitBtnLoading" : ""}`}
                             type="submit"
                             disabled={connectSubmitting}
                           >
-                            <span className="dashConnectSubmitLabel">
-                              {connectSubmitting ? "Connecting…" : "Connect"}
-                            </span>
+                            {connectSubmitting ? (
+                              <>
+                                <span className="dashConnectSubmitSpinner" aria-hidden="true" />
+                                <span className="dashConnectSubmitLabel">Connecting</span>
+                                <span className="dashConnectSubmitEllipsis" aria-hidden="true">
+                                  <span className="dashConnectSubmitEllipsisDot" />
+                                  <span className="dashConnectSubmitEllipsisDot" />
+                                  <span className="dashConnectSubmitEllipsisDot" />
+                                </span>
+                              </>
+                            ) : (
+                              <span className="dashConnectSubmitLabel">Connect</span>
+                            )}
                           </button>
                         </form>
                       </>
@@ -870,13 +1119,13 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                           </button>
                         </div>
 
-                        <div className="dashModalBody">
+                        <div className="dashModalBody dashSymbolsModalBody">
                           {Object.entries(SYMBOL_GROUPS).map(([group, syms]) => (
                             <div key={group} className="dashSymbolsGroup">
-                              <div className="dashSymbolsGroupTitle">
+                              <div className="dashSymbolsGroupTitle" role="heading" aria-level={3}>
                                 {group}
                               </div>
-                              <div className="dashSymbolsPills">
+                              <div className="dashSymbolsPills dashSymbolsPillsModal">
                                 {syms.map((sym) => {
                                   const isOn = symbolsDraft.includes(sym);
                                   return (
@@ -917,28 +1166,32 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     </div>
                   )}
                   <button
-                    className="licenseBtn dashWideBtn dashStartBtn dashBotStartBtn"
+                    className={
+                      activeSessionForAccount
+                        ? "licenseBtn dashWideBtn dashStartBtn dashBotStopBtn"
+                        : "licenseBtn dashWideBtn dashStartBtn dashBotStartBtn"
+                    }
                     type="button"
-                    onClick={start}
-                    disabled={!accounts.length || selectedSymbols.length === 0}
+                    onClick={
+                      activeSessionForAccount
+                        ? () => stop(activeSessionForAccount.id)
+                        : start
+                    }
+                    disabled={
+                      brokerChangeMode
+                        ? !activeSessionForAccount
+                        : activeSessionForAccount
+                          ? false
+                          : !accounts.length || selectedSymbols.length === 0
+                    }
                   >
-                    <span className="licenseBtnLabel">Start</span>
+                    <span className="licenseBtnLabel">
+                      {activeSessionForAccount ? "Stop" : "Start"}
+                    </span>
                   </button>
                   {!accounts.length ? (
                     <p className="dashStartHint">Connect a broker first</p>
                   ) : null}
-                  {sessions
-                    .filter((s) => s.state === "running" || s.state === "queued")
-                    .map((s) => (
-                      <button
-                        key={s.id}
-                        className="licenseBtn dashWideBtn dashBotStopBtn"
-                        type="button"
-                        onClick={() => stop(s.id)}
-                      >
-                        <span className="licenseBtnLabel">STOP SESSION #{s.id}</span>
-                      </button>
-                    ))}
                 </div>
               </div>
             )}

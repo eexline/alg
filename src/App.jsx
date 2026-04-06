@@ -5,7 +5,7 @@ import {
   prepareTelegramWebAppViewport,
 } from "./telegram_init.js";
 import { api } from "./api.js";
-import LicenseAccess from "./license_access.jsx";
+import LicenseAccess, { LICENSE_MIN_VERIFY_MS } from "./license_access.jsx";
 import Dashboard from "./dashboard.jsx";
 
 const DEMO_TOKEN_KEY = "access_token";
@@ -32,17 +32,27 @@ export default function App() {
       });
   }, [tick]);
 
-  async function loginWithTelegramInitData() {
+  async function loginWithTelegramInitData(options = {}) {
+    const { deferRefresh = false } = options;
     const initData = getInitData();
     if (!initData) {
       throw new Error("Telegram initData not found. Open this WebApp from Telegram.");
     }
     const res = await api.loginTelegram(initData);
     localStorage.setItem(DEMO_TOKEN_KEY, res.access_token);
-    refresh();
+    if (!deferRefresh) refresh();
   }
 
-  async function devDemoLogin() {
+  function waitMinVerify(flowStarted) {
+    const elapsed = performance.now() - flowStarted;
+    if (elapsed >= LICENSE_MIN_VERIFY_MS) return Promise.resolve();
+    return new Promise((r) =>
+      setTimeout(r, LICENSE_MIN_VERIFY_MS - elapsed),
+    );
+  }
+
+  async function devDemoLogin(options = {}) {
+    const { deferRefresh = false } = options;
     try {
       const r = await fetch("/api/auth/telegram", {
         method: "POST",
@@ -55,7 +65,7 @@ export default function App() {
       if (r.ok) {
         const res = JSON.parse(text);
         localStorage.setItem(DEMO_TOKEN_KEY, res.access_token);
-        refresh();
+        if (!deferRefresh) refresh();
         return;
       }
       let detail = text;
@@ -78,16 +88,19 @@ export default function App() {
     return (
       <LicenseAccess
         onActivate={async (licenseCode) => {
+          const flowStarted = performance.now();
           try {
-            await loginWithTelegramInitData();
+            await loginWithTelegramInitData({ deferRefresh: true });
             await api.redeemCode(licenseCode);
+            await waitMinVerify(flowStarted);
             refresh();
             return { ok: true };
           } catch (e) {
             if (String(e.message || e).includes("initData")) {
               try {
-                await devDemoLogin();
+                await devDemoLogin({ deferRefresh: true });
                 await api.redeemCode(licenseCode);
+                await waitMinVerify(flowStarted);
                 refresh();
                 return { ok: true };
               } catch (devErr) {

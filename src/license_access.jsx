@@ -1,20 +1,47 @@
 import React, { useState } from "react";
 
+/** Minimum time to show the “checking” state (keep in sync with App activation delay before refresh). */
+export const LICENSE_MIN_VERIFY_MS = 4000;
+
+const MIN_VERIFY_MS = LICENSE_MIN_VERIFY_MS;
+
+function sleep(minMs) {
+  return new Promise((r) => setTimeout(r, minMs));
+}
+
 export default function LicenseAccess({ onActivate, onBuy }) {
   const [key, setKey] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errBump, setErrBump] = useState(0);
 
   async function activate() {
+    const code = key.trim();
     setErr("");
+    if (!code) {
+      setErr("Enter your license key to continue.");
+      setErrBump((b) => b + 1);
+      return;
+    }
     setLoading(true);
+    const started = performance.now();
     try {
-      const res = await onActivate?.(key);
+      const res = await onActivate?.(code);
+      const elapsed = performance.now() - started;
+      if (elapsed < MIN_VERIFY_MS) {
+        await sleep(MIN_VERIFY_MS - elapsed);
+      }
       if (res && res.ok === false) {
         setErr(res.error || "Activation failed");
+        setErrBump((b) => b + 1);
       }
     } catch (e) {
+      const elapsed = performance.now() - started;
+      if (elapsed < MIN_VERIFY_MS) {
+        await sleep(MIN_VERIFY_MS - elapsed);
+      }
       setErr(String(e.message || e));
+      setErrBump((b) => b + 1);
     } finally {
       setLoading(false);
     }
@@ -29,7 +56,9 @@ export default function LicenseAccess({ onActivate, onBuy }) {
         <div className="licenseBrand">PHASE TRADE ROBOT</div>
         <div className="licenseSubtitle">LICENSE ACCESS</div>
 
-        <div className="licenseRow licenseRowInput">
+        <div
+          className={`licenseRow licenseRowInput${loading ? " licenseRowInputVerifying" : ""}`}
+        >
           <span className="licenseInputIcon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path
@@ -42,21 +71,45 @@ export default function LicenseAccess({ onActivate, onBuy }) {
             className="licenseInput"
             value={key}
             placeholder="Enter license key..."
-            onChange={(e) => setKey(e.target.value)}
+            disabled={loading}
+            onChange={(e) => {
+              setErr("");
+              setKey(e.target.value);
+            }}
+            autoComplete="off"
+            spellCheck={false}
           />
         </div>
 
+        {loading ? (
+          <p className="licenseVerifyHint" aria-live="polite">
+            <span className="licenseVerifyHintLead">Verifying license</span>
+            <span className="licenseVerifyEllipsis" aria-hidden="true">
+              <span className="licenseVerifyEllipsisDot" />
+              <span className="licenseVerifyEllipsisDot" />
+              <span className="licenseVerifyEllipsisDot" />
+            </span>
+          </p>
+        ) : null}
+
         <div className="licenseRow licenseRowPrimary">
           <button
-            className="licenseBtn licenseBtnPrimary"
+            className={`licenseBtn licenseBtnPrimary${loading ? " licenseBtnIsLoading" : ""}`}
             type="button"
             onClick={activate}
             disabled={loading}
           >
-            <span className="licenseBtnLabel">
-              {loading ? "..." : "ACTIVATE"}
-            </span>
-            <span className="licenseBtnArrow">→</span>
+            {loading ? (
+              <>
+                <span className="licenseBtnSpinner" aria-hidden="true" />
+                <span className="licenseBtnLabel">Checking</span>
+              </>
+            ) : (
+              <>
+                <span className="licenseBtnLabel">ACTIVATE</span>
+                <span className="licenseBtnArrow">→</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -80,7 +133,26 @@ export default function LicenseAccess({ onActivate, onBuy }) {
           </button>
         </div>
 
-        {err && <div className="licenseErr">{err}</div>}
+        {err ? (
+          <div
+            className="licenseErrCard"
+            role="alert"
+            key={errBump}
+          >
+            <span className="licenseErrCardGlyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                />
+              </svg>
+            </span>
+            <div className="licenseErrCardBody">
+              <span className="licenseErrCardLabel">Couldn&apos;t activate</span>
+              <p className="licenseErrCardText">{err}</p>
+            </div>
+          </div>
+        ) : null}
 
       </div>
     </div>
