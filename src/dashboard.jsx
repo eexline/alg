@@ -243,7 +243,9 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const prevBrokerExpandedRef = useRef(brokerExpanded);
   const dashShellRef = useRef(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [formControlFocused, setFormControlFocused] = useState(false);
   const tgUser = getTelegramUser();
+  const hideTabBar = keyboardOpen || formControlFocused;
 
   useEffect(() => {
     setMsg((m) => (m.trim().toLowerCase() === "linked" ? "" : m));
@@ -263,6 +265,19 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       setKeyboardOpen(gap > thresholdPx);
     };
 
+    const syncFormControlFocus = () => {
+      const shell = dashShellRef.current;
+      const ae = document.activeElement;
+      const inside =
+        !!(
+          ae &&
+          shell &&
+          shell.contains(ae) &&
+          (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT")
+        );
+      setFormControlFocused(inside);
+    };
+
     const onFocusIn = (e) => {
       const t = e.target;
       if (
@@ -273,14 +288,21 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       ) {
         return;
       }
+      setFormControlFocused(true);
       requestAnimationFrame(() => {
         syncKeyboard();
+        syncFormControlFocus();
         window.setTimeout(syncKeyboard, 180);
         window.setTimeout(syncKeyboard, 400);
       });
     };
 
     const onFocusOut = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          syncFormControlFocus();
+        });
+      });
       window.setTimeout(syncKeyboard, 120);
       window.setTimeout(syncKeyboard, 400);
     };
@@ -556,7 +578,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     <div className="dashRoot">
       <div
         ref={dashShellRef}
-        className={`dashShell${keyboardOpen ? " dashKeyboardOpen" : ""}`}
+        className={`dashShell${hideTabBar ? " dashKeyboardOpen" : ""}`}
       >
         <header className="dashHeaderFixed">
           <div className="dashHeader">
@@ -1198,7 +1220,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
           </div>
         </main>
 
-        <footer className="dashFooterFixed">
+        <footer className="dashFooterFixed" aria-hidden={hideTabBar}>
           <div className="dashFooter">
             <button
               type="button"

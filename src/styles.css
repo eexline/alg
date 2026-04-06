@@ -680,12 +680,16 @@ h1 {
   font-family: inherit;
 }
 
-/* Когда поднялась клавиатура — убираем таб-бар из видимой области */
+/* Клавиатура или фокус в поле — таб-бар полностью скрыт (не только уехал вниз) */
 .dashShell.dashKeyboardOpen .dashFooterFixed {
-  transform: translate3d(0, 115%, 0);
+  visibility: hidden;
+  transform: translate3d(0, 120%, 0);
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.22s ease, opacity 0.18s ease;
+  transition:
+    visibility 0.18s ease,
+    transform 0.22s ease,
+    opacity 0.18s ease;
 }
 
 .dashShell.dashKeyboardOpen .dashContent {
