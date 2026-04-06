@@ -17,6 +17,12 @@ const SYMBOL_GROUPS = {
   Crypto: ["BTCUSD", "ETHUSD"],
 };
 
+const STRATEGY_OPTIONS = [
+  { value: "ema_rsi_trend", label: "Balanced · EMA + RSI" },
+  { value: "aggressive", label: "Aggressive · momentum (M5)" },
+  { value: "conservative", label: "Conservative · tight RSI" },
+];
+
 /** Keep “Connecting” UI visible at least this long (API may return faster). */
 const MIN_CONNECT_UI_MS = 3000;
 
@@ -162,19 +168,21 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [strategy, setStrategy] = useState("PHASE MEDIUM");
+  const [strategyId, setStrategyId] = useState("ema_rsi_trend");
   const [selectedSymbols, setSelectedSymbols] = useState(["EURUSD"]);
   const [strategyModalOpen, setStrategyModalOpen] = useState(false);
-  const [strategyDraft, setStrategyDraft] = useState(strategy);
+  const [strategyDraft, setStrategyDraft] = useState("ema_rsi_trend");
+  const strategyLabel =
+    STRATEGY_OPTIONS.find((o) => o.value === strategyId)?.label ?? strategyId;
   const openStrategyModal = () => {
-    setStrategyDraft(strategy);
+    setStrategyDraft(strategyId);
     setStrategyModalOpen(true);
   };
   const closeStrategyModal = () => {
     setStrategyModalOpen(false);
   };
   const applyStrategyModal = () => {
-    setStrategy(strategyDraft);
+    setStrategyId(strategyDraft);
     setStrategyModalOpen(false);
   };
   const [symbolsModalOpen, setSymbolsModalOpen] = useState(false);
@@ -398,7 +406,11 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   async function start() {
     setErr("");
     try {
-      await api.startTrading(Number(tradingAccountId), selectedSymbols);
+      await api.startTrading(
+        Number(tradingAccountId),
+        selectedSymbols,
+        strategyId
+      );
       await load();
     } catch (e) {
       setErr(String(e.message || e));
@@ -1016,7 +1028,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                             openStrategyModal();
                         }}
                       >
-                        {strategy}
+                        {strategyLabel}
                       </div>
                     </div>
                     <span className="dashFieldChevron">›</span>
@@ -1047,22 +1059,18 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
 
                         <div className="dashModalBody">
                           <div className="dashSymbolsPills">
-                            {[
-                              "PHASE AGGRESSIVE",
-                              "PHASE MEDIUM",
-                              "PHASE CONSERVATIVE",
-                            ].map((s) => {
-                              const isOn = strategyDraft === s;
+                            {STRATEGY_OPTIONS.map((opt) => {
+                              const isOn = strategyDraft === opt.value;
                               return (
                                 <button
-                                  key={s}
+                                  key={opt.value}
                                   type="button"
                                   className={`dashSymbolPill${
                                     isOn ? " isActive" : ""
                                   }`}
-                                  onClick={() => setStrategyDraft(s)}
+                                  onClick={() => setStrategyDraft(opt.value)}
                                 >
-                                  {s}
+                                  {opt.label}
                                 </button>
                               );
                             })}

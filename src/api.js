@@ -38,10 +38,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  startTrading: (accountId, symbols = []) =>
+  startTrading: (accountId, symbols = [], strategy = "ema_rsi_trend") =>
     request("/api/trading/start", {
       method: "POST",
-      body: JSON.stringify({ account_id: accountId, symbols }),
+      body: JSON.stringify({
+        account_id: accountId,
+        symbols,
+        strategy,
+      }),
     }),
   stopTrading: (sessionId) =>
     request(`/api/trading/sessions/${sessionId}/stop`, { method: "POST" }),
