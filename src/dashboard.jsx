@@ -18,9 +18,9 @@ const SYMBOL_GROUPS = {
 };
 
 const STRATEGY_OPTIONS = [
-  { value: "ema_rsi_trend", label: "Balanced · EMA + RSI" },
-  { value: "aggressive", label: "Aggressive · momentum (M5)" },
-  { value: "conservative", label: "Conservative · tight RSI" },
+  { value: "aggressive", label: "PHASE AGGRESSIVE" },
+  { value: "ema_rsi_trend", label: "PHASE MEDIUM" },
+  { value: "conservative", label: "PHASE CONSERVATIVE" },
 ];
 
 /** Keep “Connecting” UI visible at least this long (API may return faster). */
@@ -162,6 +162,8 @@ function ProfileTabIcon({ className = "" }) {
 
 export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [sessions, setSessions] = useState([]);
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
   const [accountId, setAccountId] = useState("");
   const [accounts, setAccounts] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -351,7 +353,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
 
     if (!openedChange) return undefined;
 
-    const active = sessions.find(
+    const active = sessionsRef.current.find(
       (s) =>
         String(s.account_id) === String(tradingAccountId) &&
         (s.state === "running" || s.state === "queued")
@@ -372,7 +374,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     return () => {
       cancelled = true;
     };
-  }, [brokerExpanded, accounts.length, sessions, tradingAccountId]);
+  }, [brokerExpanded, accounts.length, tradingAccountId]);
 
   async function load() {
     setErr("");
