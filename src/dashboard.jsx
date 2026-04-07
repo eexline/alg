@@ -247,6 +247,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [connectSubmitting, setConnectSubmitting] = useState(false);
   const [connectErr, setConnectErr] = useState("");
   const [connectErrBump, setConnectErrBump] = useState(0);
+  const [profileRefreshing, setProfileRefreshing] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
@@ -480,8 +481,13 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   }
 
   async function refreshProfileData() {
-    await load();
-    onRefresh?.();
+    setProfileRefreshing(true);
+    try {
+      await load();
+      onRefresh?.();
+    } finally {
+      setProfileRefreshing(false);
+    }
   }
 
   const totalPnl = sessions
@@ -587,6 +593,13 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       String(s.account_id) === String(tradingAccountId) &&
       (s.state === "running" || s.state === "queued")
   );
+  const latestSessionForAccount = sessions.find(
+    (s) => String(s.account_id) === String(tradingAccountId)
+  );
+  const accountSnapshot = activeSessionForAccount || latestSessionForAccount;
+  const profileBalance = Number(accountSnapshot?.last_balance ?? 0);
+  const profileEquity = Number(accountSnapshot?.last_equity ?? 0);
+  const profileMargin = Number(accountSnapshot?.last_margin ?? 0);
 
   return (
     <div className="dashRoot">
@@ -727,6 +740,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                         type="button"
                         className="profileIconCircleBtn"
                         onClick={refreshProfileData}
+                        disabled={profileRefreshing}
                         aria-label="Refresh balance"
                       >
                         <ProfileRefreshIcon className="profileIconCircleSvg" />
@@ -735,15 +749,19 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     <div className="profileRefRows">
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Balance</span>
-                        <span className="profileRefValue">0.00 USDT</span>
+                        <span className="profileRefValue">
+                          {profileBalance.toFixed(2)} USDT
+                        </span>
                       </div>
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Equity</span>
-                        <span className="profileRefValue">0.00 USDT</span>
+                        <span className="profileRefValue">
+                          {profileEquity.toFixed(2)} USDT
+                        </span>
                       </div>
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Margin</span>
-                        <span className="profileRefValue">0</span>
+                        <span className="profileRefValue">{profileMargin.toFixed(2)}</span>
                       </div>
                       <div className="profileRefRow profileRefRowLast">
                         <span className="profileRefLabel">Profit</span>
