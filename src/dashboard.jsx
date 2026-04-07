@@ -596,10 +596,22 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const latestSessionForAccount = sessions.find(
     (s) => String(s.account_id) === String(tradingAccountId)
   );
-  const accountSnapshot = activeSessionForAccount || latestSessionForAccount;
-  const profileBalance = Number(accountSnapshot?.last_balance ?? 0);
-  const profileEquity = Number(accountSnapshot?.last_equity ?? 0);
-  const profileMargin = Number(accountSnapshot?.last_margin ?? 0);
+  const latestSnapshotForAccount = sessions.find(
+    (s) =>
+      String(s.account_id) === String(tradingAccountId) &&
+      (s.last_balance != null || s.last_equity != null || s.last_margin != null)
+  );
+  const accountSnapshot =
+    activeSessionForAccount || latestSnapshotForAccount || latestSessionForAccount;
+
+  const profileBalance =
+    accountSnapshot?.last_balance != null
+      ? Number(accountSnapshot.last_balance)
+      : null;
+  const profileEquity =
+    accountSnapshot?.last_equity != null ? Number(accountSnapshot.last_equity) : null;
+  const profileMargin =
+    accountSnapshot?.last_margin != null ? Number(accountSnapshot.last_margin) : null;
 
   return (
     <div className="dashRoot">
@@ -750,18 +762,24 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Balance</span>
                         <span className="profileRefValue">
-                          {profileBalance.toFixed(2)} USDT
+                          {profileBalance == null
+                            ? "—"
+                            : `${profileBalance.toFixed(2)} USDT`}
                         </span>
                       </div>
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Equity</span>
                         <span className="profileRefValue">
-                          {profileEquity.toFixed(2)} USDT
+                          {profileEquity == null
+                            ? "—"
+                            : `${profileEquity.toFixed(2)} USDT`}
                         </span>
                       </div>
                       <div className="profileRefRow">
                         <span className="profileRefLabel">Margin</span>
-                        <span className="profileRefValue">{profileMargin.toFixed(2)}</span>
+                        <span className="profileRefValue">
+                          {profileMargin == null ? "—" : profileMargin.toFixed(2)}
+                        </span>
                       </div>
                       <div className="profileRefRow profileRefRowLast">
                         <span className="profileRefLabel">Profit</span>
