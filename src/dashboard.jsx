@@ -239,6 +239,10 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
+  /** After Start, ignore Stop briefly — mobile/WebView can fire a delayed click on the same spot once the label flips to Stop. */
+  const postStartStopGuardRef = useRef(false);
+  const postStartStopGuardTimerRef = useRef(0);
+  const [postStartStopGuard, setPostStartStopGuard] = useState(false);
   const dashShellRef = useRef(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [formControlFocused, setFormControlFocused] = useState(false);
@@ -325,6 +329,14 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (postStartStopGuardTimerRef.current) {
+        window.clearTimeout(postStartStopGuardTimerRef.current);
+      }
+    };
+  }, []);
+
   const tradingAccountId = useMemo(() => {
     if (!accounts.length) return "";
     const cur = accountId != null && String(accountId) !== "" ? String(accountId) : "";
@@ -379,12 +391,23 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         strategyId
       );
       await load();
+      if (postStartStopGuardTimerRef.current) {
+        window.clearTimeout(postStartStopGuardTimerRef.current);
+      }
+      postStartStopGuardRef.current = true;
+      setPostStartStopGuard(true);
+      postStartStopGuardTimerRef.current = window.setTimeout(() => {
+        postStartStopGuardRef.current = false;
+        setPostStartStopGuard(false);
+        postStartStopGuardTimerRef.current = 0;
+      }, 1200);
     } catch (e) {
       setErr(String(e.message || e));
     }
   }
 
   async function stop(id) {
+    if (postStartStopGuardRef.current) return;
     setErr("");
     try {
       await api.stopTrading(id);
@@ -1201,7 +1224,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       brokerChangeMode
                         ? !activeSessionForAccount
                         : activeSessionForAccount
-                          ? false
+                          ? postStartStopGuard
                           : !accounts.length || selectedSymbols.length === 0
                     }
                   >
