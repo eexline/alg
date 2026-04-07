@@ -588,6 +588,16 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   );
   const accountSnapshot =
     activeSessionForAccount || latestSnapshotForAccount || latestSessionForAccount;
+  const livePositions = useMemo(() => {
+    const raw = accountSnapshot?.positions_json;
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }, [accountSnapshot?.positions_json]);
 
   const profileBalance =
     accountSnapshot?.last_balance != null
@@ -786,25 +796,29 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                         <span>VOL</span>
                         <span>P/L</span>
                       </div>
-                      {openSessions.length ? (
+                      {livePositions.length ? (
                         <div className="profilePosBody">
-                          {openSessions.map((s) => {
-                            const p = s.pnl != null ? Number(s.pnl) : null;
+                          {livePositions.map((p) => {
+                            const pnl = p?.profit != null ? Number(p.profit) : null;
+                            const side = String(p?.type || "").toUpperCase();
+                            const sym = String(p?.symbol || "—");
+                            const vol = p?.volume != null ? Number(p.volume) : null;
+                            const key = String(p?.ticket || `${sym}-${side}-${vol ?? "x"}`);
                             return (
-                              <div key={s.id} className="profilePosRow">
-                                <span>XAUUSD</span>
-                                <span>BOT</span>
-                                <span>—</span>
+                              <div key={key} className="profilePosRow">
+                                <span>{sym}</span>
+                                <span>{side || "—"}</span>
+                                <span>{vol == null ? "—" : vol.toFixed(2)}</span>
                                 <span
                                   className={
-                                    p == null || p === 0
+                                    pnl == null || pnl === 0
                                       ? "profileRefValue"
-                                      : p > 0
+                                      : pnl > 0
                                         ? "profileRefValue profileRefValuePos"
                                         : "profileRefValue profileRefValueNeg"
                                   }
                                 >
-                                  {p == null ? "—" : `${p >= 0 ? "+" : ""}${p.toFixed(2)}`}
+                                  {pnl == null ? "—" : `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`}
                                 </span>
                               </div>
                             );
