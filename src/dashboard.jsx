@@ -589,7 +589,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const accountSnapshot =
     activeSessionForAccount || latestSnapshotForAccount || latestSessionForAccount;
   const livePositions = useMemo(() => {
-    const raw = accountSnapshot?.positions_json;
+    // Positions are live-only: don't show stale snapshot from stopped sessions.
+    const raw = activeSessionForAccount?.positions_json;
     if (!raw) return [];
     try {
       const arr = JSON.parse(raw);
@@ -597,7 +598,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     } catch {
       return [];
     }
-  }, [accountSnapshot?.positions_json]);
+  }, [activeSessionForAccount?.positions_json]);
 
   const profileBalance =
     accountSnapshot?.last_balance != null
