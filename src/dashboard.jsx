@@ -239,7 +239,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
-  const prevBrokerExpandedRef = useRef(brokerExpanded);
   const dashShellRef = useRef(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [formControlFocused, setFormControlFocused] = useState(false);
@@ -334,36 +333,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   }, [accounts, accountId]);
 
   const brokerChangeMode = accounts.length > 0 && brokerExpanded;
-
-  useEffect(() => {
-    const prev = prevBrokerExpandedRef.current;
-    const openedChange = brokerExpanded && !prev && accounts.length > 0;
-    prevBrokerExpandedRef.current = brokerExpanded;
-
-    if (!openedChange) return undefined;
-
-    const active = sessionsRef.current.find(
-      (s) =>
-        String(s.account_id) === String(tradingAccountId) &&
-        (s.state === "running" || s.state === "queued")
-    );
-    if (!active) return undefined;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        setErr("");
-        await api.stopTrading(active.id);
-        if (!cancelled) await load();
-      } catch (e) {
-        if (!cancelled) setErr(String(e.message || e));
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [brokerExpanded, accounts.length, tradingAccountId]);
 
   async function load() {
     setErr("");
