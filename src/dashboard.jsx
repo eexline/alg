@@ -42,17 +42,6 @@ function ProfileFallbackIcon({ className = "" }) {
   );
 }
 
-function ProfileRefreshIcon({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-      <path d="M21 3v5h-5" />
-      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-      <path d="M3 21v-5h5" />
-    </svg>
-  );
-}
-
 function ProfilePencilIcon({ className = "" }) {
   return (
     <svg
@@ -247,7 +236,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [connectSubmitting, setConnectSubmitting] = useState(false);
   const [connectErr, setConnectErr] = useState("");
   const [connectErrBump, setConnectErrBump] = useState(0);
-  const [profileRefreshing, setProfileRefreshing] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
@@ -406,6 +394,13 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     load();
   }, [refreshKey]);
 
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      load();
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [refreshKey]);
+
   async function start() {
     setErr("");
     try {
@@ -477,16 +472,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       setConnectErrBump((b) => b + 1);
     } finally {
       setConnectSubmitting(false);
-    }
-  }
-
-  async function refreshProfileData() {
-    setProfileRefreshing(true);
-    try {
-      await load();
-      onRefresh?.();
-    } finally {
-      setProfileRefreshing(false);
     }
   }
 
@@ -748,15 +733,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                   <div className="profileRefCard">
                     <div className="profileRefCardHead">
                       <span className="profileRefCardTitle">Balance</span>
-                      <button
-                        type="button"
-                        className="profileIconCircleBtn"
-                        onClick={refreshProfileData}
-                        disabled={profileRefreshing}
-                        aria-label="Refresh balance"
-                      >
-                        <ProfileRefreshIcon className="profileIconCircleSvg" />
-                      </button>
                     </div>
                     <div className="profileRefRows">
                       <div className="profileRefRow">
@@ -802,14 +778,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                   <div className="profileRefCard">
                     <div className="profileRefCardHead">
                       <span className="profileRefCardTitle">Positions</span>
-                      <button
-                        type="button"
-                        className="profileRefreshOutlineBtn"
-                        onClick={refreshProfileData}
-                        aria-label="Refresh positions"
-                      >
-                        Refresh
-                      </button>
                     </div>
                     <div className="profilePosTable">
                       <div className="profilePosColHead">
