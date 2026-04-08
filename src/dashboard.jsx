@@ -445,7 +445,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     const connectFlowStarted = performance.now();
     try {
       const brokerName = (form.broker_name || server || "Broker").trim().slice(0, 128);
-      const created = await api.addBroker({
+      const queued = await api.addBrokerAsync({
         ...form,
         broker_name: brokerName,
         server,
@@ -453,6 +453,27 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         password,
         risk_percent: Number(form.risk_percent),
       });
+      const jobId = String(queued?.job_id || "");
+      if (!jobId) throw new Error("broker auth queue error");
+
+      let created = null;
+      const pollDeadline = Date.now() + 180000;
+      while (Date.now() < pollDeadline) {
+        const job = await api.brokerAuthJob(jobId);
+        const st = String(job?.status || "");
+        if (st === "success") {
+          created = job?.account || null;
+          break;
+        }
+        if (st === "error") {
+          throw new Error(String(job?.error || "broker authorization failed"));
+        }
+        await sleepMs(1200);
+      }
+      if (!created) {
+        throw new Error("broker authorization timeout, try again");
+      }
+
       let elapsed = performance.now() - connectFlowStarted;
       if (elapsed < MIN_CONNECT_UI_MS) {
         await sleepMs(MIN_CONNECT_UI_MS - elapsed);

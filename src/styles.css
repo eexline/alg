@@ -2420,6 +2420,11 @@ h1 {
   opacity: 0;
 }
 
+.dashBotStartBtn.licenseBtn.dashConnectSubmitBtnLoading:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
 .dashBotStopBtn.licenseBtn {
   /* same footprint as .dashBotStartBtn; red variant */
   height: 36px;
