@@ -510,11 +510,25 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     (s) => s.state === "running" || s.state === "queued"
   ).length;
 
-  let daysLeft = null;
-  if (user.access_expires_at) {
-    const diff = new Date(user.access_expires_at).getTime() - Date.now();
-    daysLeft = Math.max(0, Math.ceil(diff / 86400000));
-  }
+  const accessExpiryMs = user.access_expires_at
+    ? new Date(user.access_expires_at).getTime()
+    : null;
+  const accessMsLeft =
+    accessExpiryMs != null ? Math.max(0, accessExpiryMs - Date.now()) : null;
+  const hasActiveAccess =
+    Boolean(user.has_access) &&
+    (accessMsLeft == null ? true : accessMsLeft > 0);
+  const accessLeftLabel = (() => {
+    if (accessMsLeft == null) return null;
+    if (accessMsLeft <= 0) return "expired";
+    const totalMin = Math.floor(accessMsLeft / 60000);
+    const days = Math.floor(totalMin / 1440);
+    const hours = Math.floor((totalMin % 1440) / 60);
+    const mins = totalMin % 60;
+    if (days > 0) return `${days}d ${hours}h left`;
+    if (hours > 0) return `${hours}h ${mins}m left`;
+    return `${Math.max(1, mins)}m left`;
+  })();
 
   const fullName = [tgUser?.first_name, tgUser?.last_name]
     .filter(Boolean)
@@ -867,9 +881,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                   </div>
 
                   <p className="profileFootNote">
-                    Access {user.has_access ? "active" : "inactive"}
-                    {daysLeft !== null ? ` · ${daysLeft} days left` : ""}
-                    {` · Sessions ${runningCount}`}
+                    Access {hasActiveAccess ? "active" : "inactive"}
+                    {accessLeftLabel ? ` · ${accessLeftLabel}` : ""}
                   </p>
                 </div>
               </div>
