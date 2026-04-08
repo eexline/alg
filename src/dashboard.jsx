@@ -239,6 +239,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
   const [showConnectPassword, setShowConnectPassword] = useState(false);
   const brokerListHydrated = useRef(false);
+  const notifiedFailedSessionRef = useRef("");
   /** After Start, ignore Stop briefly — mobile/WebView can fire a delayed click on the same spot once the label flips to Stop. */
   const postStartStopGuardRef = useRef(false);
   const postStartStopGuardTimerRef = useRef(0);
@@ -573,6 +574,18 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const latestSessionForAccount = sessions.find(
     (s) => String(s.account_id) === String(tradingAccountId)
   );
+  useEffect(() => {
+    const failedSession = sessions.find(
+      (s) =>
+        String(s.account_id) === String(tradingAccountId) &&
+        s.state === "failed"
+    );
+    if (!failedSession) return;
+    const key = String(failedSession.id);
+    if (notifiedFailedSessionRef.current === key) return;
+    notifiedFailedSessionRef.current = key;
+    setErr("Воркер остановился с ошибкой. Сессия завершена, проверьте логи и нажмите Start снова.");
+  }, [sessions, tradingAccountId]);
   const latestSnapshotForAccount = sessions.find(
     (s) =>
       String(s.account_id) === String(tradingAccountId) &&
