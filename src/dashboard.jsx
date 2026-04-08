@@ -234,6 +234,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [usernameDraft, setUsernameDraft] = useState("");
   const [brokerExpanded, setBrokerExpanded] = useState(true);
   const [connectSubmitting, setConnectSubmitting] = useState(false);
+  const [startSubmitting, setStartSubmitting] = useState(false);
+  const [stopSubmitting, setStopSubmitting] = useState(false);
   const [connectErr, setConnectErr] = useState("");
   const [connectErrBump, setConnectErrBump] = useState(0);
   const [fieldErrors, setFieldErrors] = useState({ server: false, login: false, password: false });
@@ -384,7 +386,9 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   }, [refreshKey]);
 
   async function start() {
+    if (startSubmitting) return;
     setErr("");
+    setStartSubmitting(true);
     try {
       await api.startTrading(
         Number(tradingAccountId),
@@ -404,17 +408,22 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
       }, 1200);
     } catch (e) {
       setErr(String(e.message || e));
+    } finally {
+      setStartSubmitting(false);
     }
   }
 
   async function stop(id) {
-    if (postStartStopGuardRef.current) return;
+    if (postStartStopGuardRef.current || stopSubmitting) return;
     setErr("");
+    setStopSubmitting(true);
     try {
       await api.stopTrading(id);
       await load();
     } catch (e) {
       setErr(String(e.message || e));
+    } finally {
+      setStopSubmitting(false);
     }
   }
 
@@ -1224,8 +1233,12 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                   <button
                     className={
                       activeSessionForAccount
-                        ? "licenseBtn dashWideBtn dashStartBtn dashBotStopBtn"
-                        : "licenseBtn dashWideBtn dashStartBtn dashBotStartBtn"
+                        ? `licenseBtn dashWideBtn dashStartBtn dashBotStopBtn${
+                            stopSubmitting ? " dashConnectSubmitBtnLoading" : ""
+                          }`
+                        : `licenseBtn dashWideBtn dashStartBtn dashBotStartBtn${
+                            startSubmitting ? " dashConnectSubmitBtnLoading" : ""
+                          }`
                     }
                     type="button"
                     onClick={
@@ -1237,13 +1250,35 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       brokerChangeMode
                         ? !activeSessionForAccount
                         : activeSessionForAccount
-                          ? postStartStopGuard
-                          : !accounts.length || selectedSymbols.length === 0
+                          ? postStartStopGuard || stopSubmitting
+                          : startSubmitting || !accounts.length || selectedSymbols.length === 0
                     }
                   >
-                    <span className="licenseBtnLabel">
-                      {activeSessionForAccount ? "Stop" : "Start"}
-                    </span>
+                    {activeSessionForAccount ? stopSubmitting ? (
+                      <>
+                        <span className="dashConnectSubmitSpinner" aria-hidden="true" />
+                        <span className="licenseBtnLabel">Stopping</span>
+                        <span className="dashConnectSubmitEllipsis" aria-hidden="true">
+                          <span className="dashConnectSubmitEllipsisDot" />
+                          <span className="dashConnectSubmitEllipsisDot" />
+                          <span className="dashConnectSubmitEllipsisDot" />
+                        </span>
+                      </>
+                    ) : (
+                      <span className="licenseBtnLabel">Stop</span>
+                    ) : startSubmitting ? (
+                      <>
+                        <span className="dashConnectSubmitSpinner" aria-hidden="true" />
+                        <span className="licenseBtnLabel">Connecting</span>
+                        <span className="dashConnectSubmitEllipsis" aria-hidden="true">
+                          <span className="dashConnectSubmitEllipsisDot" />
+                          <span className="dashConnectSubmitEllipsisDot" />
+                          <span className="dashConnectSubmitEllipsisDot" />
+                        </span>
+                      </>
+                    ) : (
+                      <span className="licenseBtnLabel">Start</span>
+                    )}
                   </button>
                   {!accounts.length ? (
                     <p className="dashStartHint">Connect a broker first</p>
