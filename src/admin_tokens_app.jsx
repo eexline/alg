@@ -36,6 +36,8 @@ export default function AdminTokensApp() {
   const [items, setItems] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [listErr, setListErr] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [listQuery, setListQuery] = useState("");
   const [days, setDays] = useState("30");
   const [creating, setCreating] = useState(false);
   const [deletingCode, setDeletingCode] = useState("");
@@ -68,11 +70,20 @@ export default function AdminTokensApp() {
       .finally(() => setAuthLoading(false));
   }, []);
 
+  useEffect(() => {
+    const t = window.setTimeout(() => setListQuery(searchInput.trim()), 320);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [listQuery]);
+
   const loadList = useCallback(async () => {
     setLoadingList(true);
     setListErr("");
     try {
-      const res = await adminTokensApi.listCodes(PAGE_SIZE, page * PAGE_SIZE);
+      const res = await adminTokensApi.listCodes(PAGE_SIZE, page * PAGE_SIZE, listQuery);
       setItems(Array.isArray(res.items) ? res.items : []);
     } catch (e) {
       setItems([]);
@@ -80,7 +91,7 @@ export default function AdminTokensApp() {
     } finally {
       setLoadingList(false);
     }
-  }, [page]);
+  }, [page, listQuery]);
 
   useEffect(() => {
     if (!authLoading && !authErr) loadList();
@@ -207,8 +218,32 @@ export default function AdminTokensApp() {
       </section>
 
       <section className="adminTokensCard">
+        <div className="adminTokensListHeader">
+          <h2 className="adminTokensListTitle">Список</h2>
+          <div className="adminTokensSearchWrap">
+            <input
+              type="search"
+              className="adminTokensSearchInput"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Код, @username или ID…"
+              enterKeyHint="search"
+              autoComplete="off"
+              aria-label="Поиск по коду, username или Telegram ID"
+            />
+            {searchInput ? (
+              <button
+                type="button"
+                className="adminTokensSearchClear"
+                aria-label="Очистить поиск"
+                onClick={() => setSearchInput("")}
+              >
+                ✕
+              </button>
+            ) : null}
+          </div>
+        </div>
         <div className="adminTokensPager">
-          <h2 className="adminTokensSectionTitle adminTokensSectionTitleFlush">Список кодов</h2>
           <div className="adminTokensPagerBtns">
             <button
               type="button"
@@ -233,7 +268,9 @@ export default function AdminTokensApp() {
         {loadingList ? (
           <p className="adminTokensMuted adminTokensMutedSpaced">Загрузка…</p>
         ) : items.length === 0 ? (
-          <p className="adminTokensMuted adminTokensMutedSpaced">Кодов пока нет</p>
+          <p className="adminTokensMuted adminTokensMutedSpaced">
+            {listQuery ? "Ничего не найдено" : "Кодов пока нет"}
+          </p>
         ) : (
           <ul className="adminTokensList">
             {items.map((row) => {
@@ -246,45 +283,36 @@ export default function AdminTokensApp() {
                     <span className="adminTokensRowCode">{row.code}</span>
                     <RowStatusPill item={row} />
                   </div>
-                  <div className="adminTokensRowDetails">
-                    <div className="adminTokensRowDetail">
-                      <span className="adminTokensRowDetailKey">Осталось времени</span>
-                      <span className="adminTokensRowDetailVal">
-                        {formatTimeLeft(row.seconds_left ?? 0)}
-                      </span>
-                    </div>
-                    <div className="adminTokensRowDetail">
-                      <span className="adminTokensRowDetailKey">Заложено в коде</span>
-                      <span className="adminTokensRowDetailVal">{row.lifetime_days} дн.</span>
-                    </div>
-                    {row.used_by_telegram_id != null ? (
-                      <>
-                        <div className="adminTokensRowDetail">
-                          <span className="adminTokensRowDetailKey">Telegram ID</span>
-                          <span className="adminTokensRowDetailVal mono">{row.used_by_telegram_id}</span>
-                        </div>
-                        {uname ? (
-                          <div className="adminTokensRowDetail">
-                            <span className="adminTokensRowDetailKey">Username</span>
-                            <span className="adminTokensRowDetailVal">@{uname}</span>
-                          </div>
-                        ) : null}
-                      </>
-                    ) : null}
-                    {row.used_at ? (
-                      <div className="adminTokensRowDetail">
-                        <span className="adminTokensRowDetailKey">Дата активации</span>
-                        <span className="adminTokensRowDetailVal">{row.used_at}</span>
-                      </div>
-                    ) : null}
-                  </div>
+                  <p className="adminTokensRowSummary">
+                    <span>{formatTimeLeft(row.seconds_left ?? 0)}</span>
+                    <span className="adminTokensRowDot" aria-hidden="true">
+                      ·
+                    </span>
+                    <span>{row.lifetime_days} дн. в коде</span>
+                  </p>
+                  {row.used_by_telegram_id != null ? (
+                    <p className="adminTokensRowUser">
+                      {uname ? (
+                        <>
+                          <span className="adminTokensRowAt">@{uname}</span>
+                          <span className="adminTokensRowDot" aria-hidden="true">
+                            ·
+                          </span>
+                        </>
+                      ) : null}
+                      <span className="mono">id {row.used_by_telegram_id}</span>
+                    </p>
+                  ) : null}
+                  {row.used_at ? (
+                    <p className="adminTokensRowActivated">Активирован: {row.used_at}</p>
+                  ) : null}
                   <button
                     type="button"
-                    className="adminTokensBtn adminTokensBtnDanger adminTokensBtnBlock adminTokensBtnTouch"
+                    className="adminTokensBtn adminTokensBtnDanger adminTokensBtnBlock adminTokensBtnTouch adminTokensBtnDelete"
                     disabled={Boolean(deletingCode)}
                     onClick={() => deleteCode(row.code)}
                   >
-                    {deletingCode === row.code ? "Удаление…" : "Удалить код"}
+                    {deletingCode === row.code ? "Удаление…" : "Удалить"}
                   </button>
                 </li>
               );

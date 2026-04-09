@@ -31,10 +31,15 @@ export const adminTokensApi = {
       method: "POST",
       body: JSON.stringify({ init_data: initData }),
     }),
-  listCodes: (limit = 20, offset = 0) =>
-    request(
-      `/api/tokens/codes?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`,
-    ),
+  listCodes: (limit = 20, offset = 0, q = "") => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    const trimmed = String(q || "").trim();
+    if (trimmed) params.set("q", trimmed);
+    return request(`/api/tokens/codes?${params.toString()}`);
+  },
   createCode: (days) =>
     request("/api/tokens/codes/create", {
       method: "POST",
