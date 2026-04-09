@@ -15,14 +15,18 @@ function formatTimeLeft(sec) {
   return `${m}м`;
 }
 
-function statusLine(item) {
-  if (!item.is_active) return "выключен";
-  if (item.used_by_telegram_id != null) {
-    const uname = String(item.used_by_telegram_username || "").trim();
-    const unamePart = uname ? ` @${uname.replace(/^@+/, "")}` : "";
-    return `использован${unamePart} (tg:${item.used_by_telegram_id})`;
-  }
-  return "свободен";
+function rowStatusKind(item) {
+  if (!item.is_active) return "off";
+  if (item.used_by_telegram_id != null) return "used";
+  return "free";
+}
+
+function RowStatusPill({ item }) {
+  const kind = rowStatusKind(item);
+  const labels = { off: "Выключен", used: "Использован", free: "Свободен" };
+  return (
+    <span className={`adminTokensPill adminTokensPill--${kind}`}>{labels[kind]}</span>
+  );
 }
 
 export default function AdminTokensApp() {
@@ -82,15 +86,6 @@ export default function AdminTokensApp() {
     if (!authLoading && !authErr) loadList();
   }, [authLoading, authErr, page, loadList]);
 
-  function logout() {
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
-    setAuthErr("Сессия админа завершена. Обновите страницу и войдите заново через Telegram.");
-    setItems([]);
-    setPage(0);
-    setLastCreated(null);
-    setListErr("");
-  }
-
   async function createCode(e) {
     e.preventDefault();
     const n = parseInt(String(days).trim(), 10);
@@ -141,8 +136,8 @@ export default function AdminTokensApp() {
   if (authLoading) {
     return (
       <div className="adminTokensShell">
+        <header className="adminTokensAppHeader" aria-hidden="true" />
         <section className="adminTokensCard">
-          <h1 className="adminTokensTitle">Коды доступа</h1>
           <p className="adminTokensMuted">Проверка прав администратора…</p>
         </section>
       </div>
@@ -152,8 +147,8 @@ export default function AdminTokensApp() {
   if (authErr) {
     return (
       <div className="adminTokensShell">
+        <header className="adminTokensAppHeader" aria-hidden="true" />
         <section className="adminTokensCard">
-          <h1 className="adminTokensTitle">Коды доступа</h1>
           <p className="adminTokensErr">{authErr}</p>
           <p className="adminTokensHint">
             Доступ даётся только user id из <code className="adminTokensCode">TELEGRAM_ADMIN_IDS</code>.
@@ -165,34 +160,31 @@ export default function AdminTokensApp() {
 
   return (
     <div className="adminTokensShell">
-      <header className="adminTokensHeader">
-        <div className="adminTokensHeaderRow">
-          <h1 className="adminTokensTitle">Коды доступа</h1>
-          <button type="button" className="adminTokensBtn adminTokensBtnGhost" onClick={logout}>
-            Выйти
-          </button>
-        </div>
-      </header>
+      <header className="adminTokensAppHeader" aria-hidden="true" />
 
       <section className="adminTokensCard">
         <h2 className="adminTokensSectionTitle">Создать код</h2>
-        <form className="adminTokensFormRow" onSubmit={createCode}>
-          <label className="adminTokensLabel" htmlFor="days">
-            Срок, дней
-          </label>
-          <input
-            id="days"
-            className="adminTokensInput adminTokensInputNarrow"
-            inputMode="numeric"
-            value={days}
-            onChange={(e) => setDays(e.target.value)}
-          />
+        <form className="adminTokensForm" onSubmit={createCode}>
+          <div className="adminTokensField">
+            <label className="adminTokensLabel" htmlFor="days">
+              Срок действия
+            </label>
+            <p className="adminTokensFieldHint">Целое число дней от 1 до 3650</p>
+            <input
+              id="days"
+              className="adminTokensInput adminTokensInputBlock"
+              inputMode="numeric"
+              autoComplete="off"
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+            />
+          </div>
           <button
-            className="adminTokensBtn adminTokensBtnPrimary"
+            className="adminTokensBtn adminTokensBtnPrimary adminTokensBtnBlock"
             type="submit"
             disabled={creating}
           >
-            {creating ? "Создание…" : "Создать"}
+            {creating ? "Создание…" : "Создать код"}
           </button>
         </form>
         {createErr ? <p className="adminTokensErr">{createErr}</p> : null}
@@ -200,20 +192,27 @@ export default function AdminTokensApp() {
           <div className="adminTokensCreated">
             <p className="adminTokensCreatedLabel">Код создан — отправьте пользователю</p>
             <p className="adminTokensCreatedCode">{lastCreated.code}</p>
-            <p className="adminTokensCreatedMeta">
-              {lastCreated.days} дн. · истекает {lastCreated.expires_at || "—"}
-            </p>
+            <div className="adminTokensCreatedDetails">
+              <p className="adminTokensCreatedLine">
+                <span className="adminTokensCreatedKey">Срок</span>
+                <span className="adminTokensCreatedVal">{lastCreated.days} дн.</span>
+              </p>
+              <p className="adminTokensCreatedLine">
+                <span className="adminTokensCreatedKey">Истекает</span>
+                <span className="adminTokensCreatedVal">{lastCreated.expires_at || "—"}</span>
+              </p>
+            </div>
           </div>
         ) : null}
       </section>
 
       <section className="adminTokensCard">
         <div className="adminTokensPager">
-          <h2 className="adminTokensSectionTitle adminTokensSectionTitleInline">Список</h2>
+          <h2 className="adminTokensSectionTitle adminTokensSectionTitleFlush">Список кодов</h2>
           <div className="adminTokensPagerBtns">
             <button
               type="button"
-              className="adminTokensBtn adminTokensBtnGhost"
+              className="adminTokensBtn adminTokensBtnGhost adminTokensBtnTouch"
               disabled={page === 0 || loadingList}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
@@ -222,7 +221,7 @@ export default function AdminTokensApp() {
             <span className="adminTokensPageNum">стр. {page + 1}</span>
             <button
               type="button"
-              className="adminTokensBtn adminTokensBtnGhost"
+              className="adminTokensBtn adminTokensBtnGhost adminTokensBtnTouch"
               disabled={!hasNext || loadingList}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -230,37 +229,66 @@ export default function AdminTokensApp() {
             </button>
           </div>
         </div>
-        {listErr ? <p className="adminTokensErr">{listErr}</p> : null}
+        {listErr ? <p className="adminTokensErr adminTokensErrSpaced">{listErr}</p> : null}
         {loadingList ? (
-          <p className="adminTokensMuted">Загрузка…</p>
+          <p className="adminTokensMuted adminTokensMutedSpaced">Загрузка…</p>
         ) : items.length === 0 ? (
-          <p className="adminTokensMuted">Пусто</p>
+          <p className="adminTokensMuted adminTokensMutedSpaced">Кодов пока нет</p>
         ) : (
           <ul className="adminTokensList">
-            {items.map((row) => (
-              <li key={row.code} className="adminTokensRow">
-                <div className="adminTokensRowTop">
-                  <span className="adminTokensRowCode">{row.code}</span>
-                  <div className="adminTokensRowActions">
-                    <span className="adminTokensRowLeft">
-                      осталось {formatTimeLeft(row.seconds_left ?? 0)}
-                    </span>
-                    <button
-                      type="button"
-                      className="adminTokensBtn adminTokensBtnDanger adminTokensBtnSmall"
-                      disabled={Boolean(deletingCode)}
-                      onClick={() => deleteCode(row.code)}
-                    >
-                      {deletingCode === row.code ? "Удаление…" : "Удалить"}
-                    </button>
+            {items.map((row) => {
+              const uname = String(row.used_by_telegram_username || "")
+                .trim()
+                .replace(/^@+/, "");
+              return (
+                <li key={row.code} className="adminTokensRow">
+                  <div className="adminTokensRowHead">
+                    <span className="adminTokensRowCode">{row.code}</span>
+                    <RowStatusPill item={row} />
                   </div>
-                </div>
-                <div className="adminTokensRowMeta">
-                  {statusLine(row)} · {row.lifetime_days} дн.
-                  {row.used_at ? ` · использован ${row.used_at}` : ""}
-                </div>
-              </li>
-            ))}
+                  <div className="adminTokensRowDetails">
+                    <div className="adminTokensRowDetail">
+                      <span className="adminTokensRowDetailKey">Осталось времени</span>
+                      <span className="adminTokensRowDetailVal">
+                        {formatTimeLeft(row.seconds_left ?? 0)}
+                      </span>
+                    </div>
+                    <div className="adminTokensRowDetail">
+                      <span className="adminTokensRowDetailKey">Заложено в коде</span>
+                      <span className="adminTokensRowDetailVal">{row.lifetime_days} дн.</span>
+                    </div>
+                    {row.used_by_telegram_id != null ? (
+                      <>
+                        <div className="adminTokensRowDetail">
+                          <span className="adminTokensRowDetailKey">Telegram ID</span>
+                          <span className="adminTokensRowDetailVal mono">{row.used_by_telegram_id}</span>
+                        </div>
+                        {uname ? (
+                          <div className="adminTokensRowDetail">
+                            <span className="adminTokensRowDetailKey">Username</span>
+                            <span className="adminTokensRowDetailVal">@{uname}</span>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {row.used_at ? (
+                      <div className="adminTokensRowDetail">
+                        <span className="adminTokensRowDetailKey">Дата активации</span>
+                        <span className="adminTokensRowDetailVal">{row.used_at}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="adminTokensBtn adminTokensBtnDanger adminTokensBtnBlock adminTokensBtnTouch"
+                    disabled={Boolean(deletingCode)}
+                    onClick={() => deleteCode(row.code)}
+                  >
+                    {deletingCode === row.code ? "Удаление…" : "Удалить код"}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
