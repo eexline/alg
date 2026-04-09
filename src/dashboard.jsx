@@ -22,6 +22,26 @@ const STRATEGY_OPTIONS = [
   { value: "ema_rsi_trend", label: "PHASE MEDIUM" },
   { value: "conservative", label: "PHASE CONSERVATIVE" },
 ];
+const DASH_PREF_STRATEGY_KEY = "dash_pref_strategy_id";
+const DASH_PREF_SYMBOLS_KEY = "dash_pref_symbols";
+const DEFAULT_STRATEGY_ID = "ema_rsi_trend";
+const DEFAULT_SYMBOLS = ["EURUSD"];
+const ALL_SYMBOLS = Array.from(
+  new Set(Object.values(SYMBOL_GROUPS).flat().map((s) => String(s)))
+);
+
+function normalizeSavedSymbols(raw) {
+  if (!Array.isArray(raw)) return [...DEFAULT_SYMBOLS];
+  const seen = new Set();
+  const out = [];
+  for (const item of raw) {
+    const sym = String(item || "").trim().toUpperCase();
+    if (!sym || seen.has(sym) || !ALL_SYMBOLS.includes(sym)) continue;
+    seen.add(sym);
+    out.push(sym);
+  }
+  return out.length ? out : [...DEFAULT_SYMBOLS];
+}
 
 /** Keep “Connecting” UI visible at least this long (API may return faster). */
 const MIN_CONNECT_UI_MS = 3000;
@@ -159,10 +179,26 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [strategyId, setStrategyId] = useState("ema_rsi_trend");
-  const [selectedSymbols, setSelectedSymbols] = useState(["EURUSD"]);
+  const [strategyId, setStrategyId] = useState(() => {
+    try {
+      const saved = String(localStorage.getItem(DASH_PREF_STRATEGY_KEY) || "").trim();
+      return STRATEGY_OPTIONS.some((o) => o.value === saved)
+        ? saved
+        : DEFAULT_STRATEGY_ID;
+    } catch {
+      return DEFAULT_STRATEGY_ID;
+    }
+  });
+  const [selectedSymbols, setSelectedSymbols] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(DASH_PREF_SYMBOLS_KEY) || "null");
+      return normalizeSavedSymbols(raw);
+    } catch {
+      return [...DEFAULT_SYMBOLS];
+    }
+  });
   const [strategyModalOpen, setStrategyModalOpen] = useState(false);
-  const [strategyDraft, setStrategyDraft] = useState("ema_rsi_trend");
+  const [strategyDraft, setStrategyDraft] = useState(strategyId);
   const strategyLabel =
     STRATEGY_OPTIONS.find((o) => o.value === strategyId)?.label ?? strategyId;
   const openStrategyModal = () => {
@@ -255,6 +291,22 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   useEffect(() => {
     setMsg((m) => (m.trim().toLowerCase() === "linked" ? "" : m));
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DASH_PREF_STRATEGY_KEY, strategyId);
+    } catch {
+      // ignore storage errors
+    }
+  }, [strategyId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DASH_PREF_SYMBOLS_KEY, JSON.stringify(selectedSymbols));
+    } catch {
+      // ignore storage errors
+    }
+  }, [selectedSymbols]);
 
   useEffect(() => {
     const vv = window.visualViewport;

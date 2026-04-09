@@ -1,0 +1,280 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
+
+:root {
+  font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: #060708;
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(210deg, #2a2d34 0%, #1b1e24 26%, #111319 54%, #07080a 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+#root {
+  min-height: 100%;
+}
+
+.adminTokensShell {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: calc(12px + var(--safe-area-top)) 1rem calc(24px + var(--safe-area-bottom));
+  box-sizing: border-box;
+}
+
+.adminTokensHeader {
+  margin-bottom: 1.25rem;
+}
+
+.adminTokensHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.adminTokensTitle {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.adminTokensHint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.adminTokensCode {
+  font-size: 0.78em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #93c5fd;
+}
+
+.adminTokensCard {
+  background: rgba(20, 22, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.adminTokensSectionTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.adminTokensSectionTitleInline {
+  margin: 0;
+}
+
+.adminTokensFormRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.adminTokensFormRow .adminTokensLabel {
+  flex: 1 1 100%;
+}
+
+.adminTokensLabel {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 0.35rem;
+}
+
+.adminTokensInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.adminTokensInput:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.adminTokensInputNarrow {
+  max-width: 100px;
+  flex: 0 0 auto;
+}
+
+.adminTokensBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.adminTokensBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adminTokensBtnPrimary {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+}
+
+.adminTokensBtnGhost {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.adminTokensBtnDanger {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.adminTokensBtnSmall {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+.adminTokensErr {
+  margin: 0.65rem 0 0;
+  color: #fca5a5;
+  font-size: 0.88rem;
+}
+
+.adminTokensMuted {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+.adminTokensCreated {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.adminTokensCreatedLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.adminTokensCreatedCode {
+  margin: 0.5rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  color: #86efac;
+}
+
+.adminTokensCreatedMeta {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.adminTokensPager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.adminTokensPagerBtns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.adminTokensPageNum {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.adminTokensList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.adminTokensRow {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.adminTokensRow:last-child {
+  border-bottom: none;
+}
+
+.adminTokensRowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.adminTokensRowCode {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #e2e8f0;
+}
+
+.adminTokensRowLeft {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.adminTokensRowMeta {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.35;
+}
+
+.adminTokensRowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
