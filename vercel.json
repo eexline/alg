@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "http://2.27.16.202:8001/api/:path*"
     },
