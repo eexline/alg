@@ -69,6 +69,7 @@ body {
   padding: clamp(1.1rem, 3.5vw, 1.35rem);
   margin-bottom: 1rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .adminTokensSectionTitle {
@@ -86,6 +87,62 @@ body {
 .adminTokensSectionTitleFlush {
   margin: 0 0 0.65rem;
   width: 100%;
+}
+
+.adminTokensListHeader {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 0.65rem;
+}
+
+.adminTokensListTitle {
+  margin: 0;
+  font-size: clamp(1.05rem, 3.8vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.adminTokensSearchWrap {
+  position: relative;
+  width: 100%;
+}
+
+.adminTokensSearchInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.95rem;
+  padding: 0.65rem 2.4rem 0.65rem 0.85rem;
+  box-sizing: border-box;
+}
+
+.adminTokensSearchInput::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.adminTokensSearchInput:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.adminTokensSearchClear {
+  position: absolute;
+  top: 50%;
+  right: 0.42rem;
+  transform: translateY(-50%);
+  border: none;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
 }
 
 .adminTokensForm {
@@ -222,12 +279,15 @@ body {
 
 .adminTokensCreatedCode {
   margin: 0.65rem 0 0;
-  font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+  font-size: clamp(1rem, 4vw, 1.2rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  word-break: break-all;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   line-height: 1.35;
   color: #86efac;
+  -webkit-overflow-scrolling: touch;
 }
 
 .adminTokensCreatedDetails {
@@ -293,6 +353,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .adminTokensRow {
@@ -310,6 +372,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.55rem;
+  min-width: 0;
 }
 
 @media (min-width: 380px) {
@@ -323,11 +386,14 @@ body {
 
 .adminTokensRowCode {
   font-weight: 700;
-  font-size: clamp(0.95rem, 3.5vw, 1.05rem);
-  letter-spacing: 0.06em;
+  font-size: clamp(0.92rem, 3.3vw, 1rem);
+  letter-spacing: 0.04em;
   color: #f1f5f9;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.35;
+  max-width: 100%;
 }
 
 .adminTokensPill {
@@ -367,6 +433,7 @@ body {
   font-size: 0.86rem;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.62);
+  min-width: 0;
 }
 
 .adminTokensRowUser {
@@ -375,6 +442,7 @@ body {
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.78);
   word-break: break-word;
+  min-width: 0;
 }
 
 .adminTokensRowAt {
