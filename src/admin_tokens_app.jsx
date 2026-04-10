@@ -41,6 +41,7 @@ export default function AdminTokensApp() {
   const [days, setDays] = useState("30");
   const [creating, setCreating] = useState(false);
   const [deletingCode, setDeletingCode] = useState("");
+  const [pendingDeleteCode, setPendingDeleteCode] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [lastCreated, setLastCreated] = useState(null);
 
@@ -97,6 +98,22 @@ export default function AdminTokensApp() {
     if (!authLoading && !authErr) loadList();
   }, [authLoading, authErr, page, loadList]);
 
+  useEffect(() => {
+    if (!pendingDeleteCode) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && !deletingCode) {
+        setPendingDeleteCode("");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [pendingDeleteCode, deletingCode]);
+
   async function createCode(e) {
     e.preventDefault();
     const n = parseInt(String(days).trim(), 10);
@@ -125,7 +142,6 @@ export default function AdminTokensApp() {
   async function deleteCode(code) {
     const codeText = String(code || "").trim();
     if (!codeText) return;
-    if (!window.confirm(`Удалить код ${codeText}?`)) return;
     setDeletingCode(codeText);
     setListErr("");
     try {
@@ -140,6 +156,24 @@ export default function AdminTokensApp() {
     } finally {
       setDeletingCode("");
     }
+  }
+
+  function requestDelete(code) {
+    const codeText = String(code || "").trim();
+    if (!codeText || deletingCode) return;
+    setPendingDeleteCode(codeText);
+  }
+
+  function cancelDelete() {
+    if (deletingCode) return;
+    setPendingDeleteCode("");
+  }
+
+  async function confirmDelete() {
+    const codeText = String(pendingDeleteCode || "").trim();
+    if (!codeText) return;
+    await deleteCode(codeText);
+    setPendingDeleteCode("");
   }
 
   const hasNext = items.length === PAGE_SIZE;
@@ -310,7 +344,7 @@ export default function AdminTokensApp() {
                     type="button"
                     className="adminTokensBtn adminTokensBtnDanger adminTokensBtnBlock adminTokensBtnTouch adminTokensBtnDelete"
                     disabled={Boolean(deletingCode)}
-                    onClick={() => deleteCode(row.code)}
+                    onClick={() => requestDelete(row.code)}
                   >
                     {deletingCode === row.code ? "Удаление…" : "Удалить"}
                   </button>
@@ -330,6 +364,37 @@ export default function AdminTokensApp() {
           </ul>
         )}
       </section>
+      {pendingDeleteCode ? (
+        <div
+          className="adminTokensModalOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={cancelDelete}
+        >
+          <div className="adminTokensModalCard" onClick={(e) => e.stopPropagation()}>
+            <p className="adminTokensModalTitle">Удалить код?</p>
+            <p className="adminTokensModalText">{pendingDeleteCode}</p>
+            <div className="adminTokensModalActions">
+              <button
+                type="button"
+                className="adminTokensBtn adminTokensBtnGhost adminTokensModalBtn"
+                onClick={cancelDelete}
+                disabled={Boolean(deletingCode)}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="adminTokensBtn adminTokensBtnDanger adminTokensModalBtn"
+                onClick={confirmDelete}
+                disabled={Boolean(deletingCode)}
+              >
+                {deletingCode ? "Удаление…" : "Удалить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
