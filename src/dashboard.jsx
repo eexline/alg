@@ -427,6 +427,19 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         setBrokerExpanded(true);
       }
     } catch (e) {
+      const msg = String(e?.message || e || "");
+      const unauthorized =
+        e?.status === 401 ||
+        msg.includes("401") ||
+        msg.toLowerCase().includes("not authenticated") ||
+        msg.toLowerCase().includes("no authorization") ||
+        msg.toLowerCase().includes("unauthorized");
+      if (unauthorized) {
+        localStorage.removeItem("access_token");
+        setErr("");
+        onRefresh?.();
+        return;
+      }
       setErr(String(e.message || e));
     }
   }
