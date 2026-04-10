@@ -4,6 +4,7 @@ import { getInitData, prepareTelegramWebAppViewport } from "./telegram_init.js";
 
 const ADMIN_TOKEN_KEY = "admin_access_token";
 const PAGE_SIZE = 15;
+const AUTO_REFRESH_MS = 8000;
 
 function formatTimeLeft(sec) {
   if (sec <= 0) return "истёк";
@@ -80,23 +81,41 @@ export default function AdminTokensApp() {
     setPage(0);
   }, [listQuery]);
 
-  const loadList = useCallback(async () => {
-    setLoadingList(true);
-    setListErr("");
+  const loadList = useCallback(async (opts = {}) => {
+    const silent = Boolean(opts.silent);
+    if (!silent) setLoadingList(true);
+    if (!silent) setListErr("");
     try {
       const res = await adminTokensApi.listCodes(PAGE_SIZE, page * PAGE_SIZE, listQuery);
       setItems(Array.isArray(res.items) ? res.items : []);
     } catch (e) {
-      setItems([]);
-      setListErr(String(e.message || e));
+      if (!silent) {
+        setItems([]);
+        setListErr(String(e.message || e));
+      }
     } finally {
-      setLoadingList(false);
+      if (!silent) setLoadingList(false);
     }
   }, [page, listQuery]);
 
   useEffect(() => {
     if (!authLoading && !authErr) loadList();
   }, [authLoading, authErr, page, loadList]);
+
+  useEffect(() => {
+    if (authLoading || authErr) return undefined;
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      loadList({ silent: true });
+    };
+    const timer = window.setInterval(tick, AUTO_REFRESH_MS);
+    const onVisible = () => tick();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [authLoading, authErr, loadList]);
 
   useEffect(() => {
     if (!pendingDeleteCode) return undefined;
