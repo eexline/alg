@@ -404,7 +404,12 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   async function load() {
     setErr("");
     try {
-      const [s, b] = await Promise.all([api.sessions(), api.listBrokers()]);
+      const [me, s, b] = await Promise.all([api.me(), api.sessions(), api.listBrokers()]);
+      if (!me?.has_access) {
+        localStorage.removeItem("access_token");
+        onRefresh?.();
+        return;
+      }
       setSessions(s);
       setAccounts(b);
       if (b.length) {
