@@ -314,6 +314,16 @@ export default function AdminTokensApp() {
                   >
                     {deletingCode === row.code ? "Удаление…" : "Удалить"}
                   </button>
+                  {uname ? (
+                    <a
+                      className="adminTokensBtn adminTokensBtnGhost adminTokensBtnBlock adminTokensBtnTouch adminTokensBtnMessage"
+                      href={`https://t.me/${uname}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Написать пользователю
+                    </a>
+                  ) : null}
                 </li>
               );
             })}

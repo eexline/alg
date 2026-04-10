@@ -9,23 +9,34 @@
 
 html {
   height: 100%;
+  min-height: 100%;
+  background: #060708;
 }
 
 body {
+  position: relative;
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
   background-color: #060708;
+  background-image: none;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #060708;
   background-image:
     linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 46%),
     linear-gradient(210deg, #2a2d34 0%, #1b1e24 26%, #111319 54%, #07080a 100%);
   background-repeat: no-repeat, no-repeat;
-  /* 让背景随页面内容高度延展，避免列表变长后出现纯黑底 */
-  background-size: 100% 100%, 100% max(100%, 100vh);
-  background-attachment: scroll, scroll;
-  color: rgba(255, 255, 255, 0.92);
+  background-size: cover, cover;
 }
 
 #root {
@@ -519,9 +530,37 @@ body {
   border-color: rgba(248, 113, 113, 0.25);
 }
 
+.adminTokensBtnMessage {
+  margin-top: 0.45rem;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.86rem;
+  min-height: 2.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  color: #bfdbfe;
+}
+
+.adminTokensBtnMessage:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(147, 197, 253, 0.7);
+}
+
+.adminTokensBtnMessage:active {
+  transform: translateY(1px);
+}
+
 @media (max-width: 420px) {
   .adminTokensBtnDelete {
     min-height: 2.8rem;
+    font-size: 0.9rem;
+  }
+
+  .adminTokensBtnMessage {
+    min-height: 2.7rem;
     font-size: 0.9rem;
   }
 }
