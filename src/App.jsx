@@ -22,7 +22,10 @@ export default function App() {
 
   useEffect(() => {
     const token = localStorage.getItem(DEMO_TOKEN_KEY);
-    if (!token) return;
+    if (!token) {
+      setUser(null);
+      return;
+    }
     api
       .me()
       .then(setUser)
