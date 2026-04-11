@@ -374,6 +374,18 @@ h1 {
   color: rgba(255, 255, 255, 0.5);
 }
 
+a.licenseBtn {
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.licenseBtn.licenseBtnBlocked {
+  pointer-events: none;
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .licenseBtn {
   width: 100%;
   height: 48px;
@@ -432,18 +444,18 @@ h1 {
     0 12px 24px rgba(0, 0, 0, 0.52);
 }
 
-.licenseBtnPrimary:hover:not(:disabled),
-.licenseBtnSecondary:hover:not(:disabled) {
+.licenseBtnPrimary:hover:not(:disabled):not(.licenseBtnBlocked),
+.licenseBtnSecondary:hover:not(:disabled):not(.licenseBtnBlocked) {
   transform: translateY(-1px);
 }
 
-.licenseBtnPrimary:hover:not(:disabled) {
+.licenseBtnPrimary:hover:not(:disabled):not(.licenseBtnBlocked) {
   border-color: rgba(255, 255, 255, 0.82);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset,
     0 10px 20px rgba(0, 0, 0, 0.34);
 }
 
-.licenseBtnSecondary:hover:not(:disabled) {
+.licenseBtnSecondary:hover:not(:disabled):not(.licenseBtnBlocked) {
   border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset,
     0 12px 22px rgba(0, 0, 0, 0.48);

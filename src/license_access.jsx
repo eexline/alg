@@ -9,7 +9,7 @@ function sleep(minMs) {
   return new Promise((r) => setTimeout(r, minMs));
 }
 
-export default function LicenseAccess({ onActivate, onBuy }) {
+export default function LicenseAccess({ onActivate, buyUrl }) {
   const [key, setKey] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
@@ -113,25 +113,32 @@ export default function LicenseAccess({ onActivate, onBuy }) {
           </button>
         </div>
 
-        <div className="licenseRow licenseRowSecondary">
-          <button
-            className="licenseBtn licenseBtnSecondary"
-            type="button"
-            onClick={() => onBuy?.()}
-            disabled={loading}
-          >
-            <span className="licenseBtnIcon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M7 9V7a5 5 0 0 1 10 0v2h1.2a1.8 1.8 0 0 1 1.8 1.8l-0.7 8.2A2 2 0 0 1 17.3 21H6.7a2 2 0 0 1-2-2L4 10.8A1.8 1.8 0 0 1 5.8 9H7zm2 0h6V7a3 3 0 0 0-6 0v2z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            <span className="licenseBtnLabel">BUY LICENSE KEY</span>
-            <span className="licenseBtnArrow">→</span>
-          </button>
-        </div>
+        {buyUrl ? (
+          <div className="licenseRow licenseRowSecondary">
+            <a
+              className={`licenseBtn licenseBtnSecondary${loading ? " licenseBtnBlocked" : ""}`}
+              href={buyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              tabIndex={loading ? -1 : 0}
+              aria-disabled={loading}
+              onClick={(e) => {
+                if (loading) e.preventDefault();
+              }}
+            >
+              <span className="licenseBtnIcon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M7 9V7a5 5 0 0 1 10 0v2h1.2a1.8 1.8 0 0 1 1.8 1.8l-0.7 8.2A2 2 0 0 1 17.3 21H6.7a2 2 0 0 1-2-2L4 10.8A1.8 1.8 0 0 1 5.8 9H7zm2 0h6V7a3 3 0 0 0-6 0v2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              <span className="licenseBtnLabel">BUY LICENSE KEY</span>
+              <span className="licenseBtnArrow">→</span>
+            </a>
+          </div>
+        ) : null}
 
         {err ? (
           <div

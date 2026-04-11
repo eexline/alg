@@ -13,11 +13,28 @@ const DEMO_TOKEN_KEY = "access_token";
 export default function App() {
   const [user, setUser] = useState(null);
   const [tick, setTick] = useState(0);
+  const [licenseBuyUrl, setLicenseBuyUrl] = useState(null);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     prepareTelegramWebAppViewport();
     applyTheme();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .licensePurchaseUrl()
+      .then((res) => {
+        const u = typeof res?.url === "string" ? res.url.trim() : "";
+        if (!cancelled) setLicenseBuyUrl(u || null);
+      })
+      .catch(() => {
+        if (!cancelled) setLicenseBuyUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -90,6 +107,7 @@ export default function App() {
   if (!user || !user.has_access) {
     return (
       <LicenseAccess
+        buyUrl={licenseBuyUrl}
         onActivate={async (licenseCode) => {
           const flowStarted = performance.now();
           try {
@@ -112,9 +130,6 @@ export default function App() {
             }
             return { ok: false, error: String(e.message || e) };
           }
-        }}
-        onBuy={() => {
-          alert("BUY LICENSE KEY: TODO (подключим позже к Telegram/каналу/оплате).");
         }}
       />
     );

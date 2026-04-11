@@ -15,11 +15,20 @@ async function request(path, opts = {}) {
   } catch {
     data = text;
   }
-  if (!r.ok) throw new Error(typeof data === "object" && data?.detail ? JSON.stringify(data.detail) : text);
+  if (!r.ok) {
+    const err = new Error(
+      typeof data === "object" && data?.detail
+        ? JSON.stringify(data.detail)
+        : text,
+    );
+    err.status = r.status;
+    throw err;
+  }
   return data;
 }
 
 export const api = {
+  licensePurchaseUrl: () => request("/api/webapp/license-purchase-url"),
   loginTelegram: (initData) =>
     request("/api/auth/telegram", {
       method: "POST",
