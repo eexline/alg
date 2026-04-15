@@ -19,12 +19,12 @@ const SYMBOL_GROUPS = {
 
 const STRATEGY_OPTIONS = [
   { value: "aggressive", label: "PHASE AGGRESSIVE" },
-  { value: "ema_rsi_trend", label: "PHASE MEDIUM" },
+  { value: "medium", label: "PHASE MEDIUM" },
   { value: "conservative", label: "PHASE CONSERVATIVE" },
 ];
 const DASH_PREF_STRATEGY_KEY = "dash_pref_strategy_id";
 const DASH_PREF_SYMBOLS_KEY = "dash_pref_symbols";
-const DEFAULT_STRATEGY_ID = "ema_rsi_trend";
+const DEFAULT_STRATEGY_ID = "medium";
 const DEFAULT_SYMBOLS = ["EURUSD"];
 const ALL_SYMBOLS = Array.from(
   new Set(Object.values(SYMBOL_GROUPS).flat().map((s) => String(s)))
@@ -568,9 +568,14 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     }
   }
 
-  const totalPnl = sessions
-    .filter((s) => s.pnl !== null && s.pnl !== undefined)
-    .reduce((acc, s) => acc + Number(s.pnl), 0);
+  // Profit in profile should be per current session (not sum of historical sessions).
+  const sessionPnl = (() => {
+    const src = activeSessionForAccount || latestSessionForAccount;
+    if (!src) return null;
+    if (src.pnl === null || src.pnl === undefined) return null;
+    const n = Number(src.pnl);
+    return Number.isFinite(n) ? n : null;
+  })();
 
   const openSessions = sessions.filter(
     (s) => s.state === "running" || s.state === "queued"
@@ -888,18 +893,17 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                         </span>
                       </div>
                       <div className="profileRefRow profileRefRowLast">
-                        <span className="profileRefLabel">Profit</span>
+                        <span className="profileRefLabel">Profit (session)</span>
                         <span
                           className={
-                            totalPnl > 0
+                            (sessionPnl ?? 0) > 0
                               ? "profileRefValue profileRefValuePos"
-                              : totalPnl < 0
+                              : (sessionPnl ?? 0) < 0
                                 ? "profileRefValue profileRefValueNeg"
                                 : "profileRefValue profileRefValuePos"
                           }
                         >
-                          {totalPnl > 0 ? "+" : ""}
-                          {totalPnl.toFixed(2)}
+                          {sessionPnl == null ? "—" : `${sessionPnl > 0 ? "+" : ""}${sessionPnl.toFixed(2)}`}
                         </span>
                       </div>
                     </div>
