@@ -53,7 +53,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
   brokerAuthJob: (jobId) => request(`/api/brokers/accounts/async/${jobId}`),
-  startTrading: (accountId, symbols = [], strategy = "ema_rsi_trend") =>
+  startTrading: (accountId, symbols = [], strategy = "medium") =>
     request("/api/trading/start", {
       method: "POST",
       body: JSON.stringify({
