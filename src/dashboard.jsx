@@ -568,15 +568,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     }
   }
 
-  // Profit in profile should be per current session (not sum of historical sessions).
-  const sessionPnl = (() => {
-    const src = activeSessionForAccount || latestSessionForAccount;
-    if (!src) return null;
-    if (src.pnl === null || src.pnl === undefined) return null;
-    const n = Number(src.pnl);
-    return Number.isFinite(n) ? n : null;
-  })();
-
   const openSessions = sessions.filter(
     (s) => s.state === "running" || s.state === "queued"
   );
@@ -693,6 +684,14 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const latestSessionForAccount = sessions.find(
     (s) => String(s.account_id) === String(tradingAccountId)
   );
+  // Profit in profile should be per current session (not sum of historical sessions).
+  const sessionPnl = (() => {
+    const src = activeSessionForAccount || latestSessionForAccount;
+    if (!src) return null;
+    if (src.pnl === null || src.pnl === undefined) return null;
+    const n = Number(src.pnl);
+    return Number.isFinite(n) ? n : null;
+  })();
   useEffect(() => {
     const failedSession = sessions.find(
       (s) =>
