@@ -806,7 +806,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     const key = String(failedSession.id);
     if (notifiedFailedSessionRef.current === key) return;
     notifiedFailedSessionRef.current = key;
-    setErr("Воркер остановился с ошибкой. Сессия завершена, проверьте логи и нажмите Start снова.");
+    // Do not show generic "worker crashed" banner in WebApp.
   }, [sessions, tradingAccountId]);
   const latestSnapshotForAccount = sessions.find(
     (s) =>
