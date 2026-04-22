@@ -50,6 +50,78 @@ function sleepMs(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const BERLIN_TZ = "Europe/Berlin";
+
+function _dtfParts(timeZone, date) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(date);
+  const out = {};
+  for (const p of parts) out[p.type] = p.value;
+  return out;
+}
+
+function _tzOffsetMs(date, timeZone) {
+  // Offset = (formatted-in-tz as-if-UTC) - (actual UTC time)
+  const p = _dtfParts(timeZone, date);
+  const asUtc = Date.UTC(
+    Number(p.year),
+    Number(p.month) - 1,
+    Number(p.day),
+    Number(p.hour),
+    Number(p.minute),
+    Number(p.second)
+  );
+  return asUtc - date.getTime();
+}
+
+function _zonedTimeToUtcMs({ year, month, day, hour, minute }, timeZone) {
+  // Two-pass conversion to account for DST.
+  const guessUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  let utcMs = guessUtc - _tzOffsetMs(new Date(guessUtc), timeZone);
+  utcMs = guessUtc - _tzOffsetMs(new Date(utcMs), timeZone);
+  return utcMs;
+}
+
+function getWeekendMarketStatusBerlin(now = new Date()) {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: BERLIN_TZ,
+    weekday: "short",
+  }).format(now);
+  const isWeekend = weekday === "Sat" || weekday === "Sun";
+  if (!isWeekend) return { closed: false, nextOpenUtcMs: 0 };
+
+  const p = _dtfParts(BERLIN_TZ, now);
+  const y = Number(p.year);
+  const m = Number(p.month);
+  const d = Number(p.day);
+
+  // Find next Monday in Berlin calendar.
+  const addDays = weekday === "Sat" ? 2 : 1;
+  const baseUtcNoon = _zonedTimeToUtcMs({ year: y, month: m, day: d, hour: 12, minute: 0 }, BERLIN_TZ);
+  const mondayUtcNoon = baseUtcNoon + addDays * 24 * 60 * 60 * 1000;
+  const mondayParts = _dtfParts(BERLIN_TZ, new Date(mondayUtcNoon));
+  const nextOpenUtcMs = _zonedTimeToUtcMs(
+    {
+      year: Number(mondayParts.year),
+      month: Number(mondayParts.month),
+      day: Number(mondayParts.day),
+      hour: 9,
+      minute: 0,
+    },
+    BERLIN_TZ
+  );
+  return { closed: true, nextOpenUtcMs };
+}
+
 function ProfileFallbackIcon({ className = "" }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
@@ -288,6 +360,30 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const tgUser = getTelegramUser();
   const hideTabBar = keyboardOpen || formControlFocused;
 
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const marketStatus = useMemo(() => {
+    // depends on nowTick to refresh
+    void nowTick;
+    const s = getWeekendMarketStatusBerlin(new Date());
+    const nextOpenText = s.closed && s.nextOpenUtcMs
+      ? new Intl.DateTimeFormat("ru-RU", {
+          timeZone: BERLIN_TZ,
+          weekday: "long",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(s.nextOpenUtcMs))
+      : "";
+    return { ...s, nextOpenText };
+  }, [nowTick]);
+
   useEffect(() => {
     setMsg((m) => (m.trim().toLowerCase() === "linked" ? "" : m));
   }, []);
@@ -458,6 +554,14 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   async function start() {
     if (startSubmitting) return;
     setErr("");
+    if (marketStatus.closed) {
+      setErr(
+        marketStatus.nextOpenText
+          ? `Рынок закрыт (выходные). Торговля станет доступной: ${marketStatus.nextOpenText} (Berlin).`
+          : "Рынок закрыт (выходные)."
+      );
+      return;
+    }
     setStartSubmitting(true);
     try {
       await api.startTrading(
@@ -1358,7 +1462,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                         ? !activeSessionForAccount
                         : activeSessionForAccount
                           ? postStartStopGuard || stopSubmitting
-                          : startSubmitting || !accounts.length || selectedSymbols.length === 0
+                          : marketStatus.closed || startSubmitting || !accounts.length || selectedSymbols.length === 0
                     }
                   >
                     {activeSessionForAccount ? stopSubmitting ? (
@@ -1387,6 +1491,16 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       <span className="licenseBtnLabel">Start</span>
                     )}
                   </button>
+                  {!activeSessionForAccount && marketStatus.closed ? (
+                    <div className="dashMarketClosedCard" role="status" aria-live="polite">
+                      <div className="dashMarketClosedTitle">Market closed</div>
+                      <div className="dashMarketClosedText">
+                        Рынок закрыт (выходные). Торговля станет доступной{" "}
+                        <span className="dashMarketClosedWhen">{marketStatus.nextOpenText || "в понедельник 09:00"}</span>{" "}
+                        (Berlin).
+                      </div>
+                    </div>
+                  ) : null}
                   {!accounts.length ? (
                     <p className="dashStartHint">Connect a broker first</p>
                   ) : null}
