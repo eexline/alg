@@ -557,8 +557,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     if (marketStatus.closed) {
       setErr(
         marketStatus.nextOpenText
-          ? `Рынок закрыт (выходные). Торговля станет доступной: ${marketStatus.nextOpenText} (Berlin).`
-          : "Рынок закрыт (выходные)."
+          ? `Market closed (weekend). Trading will be available: ${marketStatus.nextOpenText} (Berlin).`
+          : "Market closed (weekend)."
       );
       return;
     }
@@ -1495,8 +1495,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     <div className="dashMarketClosedCard" role="status" aria-live="polite">
                       <div className="dashMarketClosedTitle">Market closed</div>
                       <div className="dashMarketClosedText">
-                        Рынок закрыт (выходные). Торговля станет доступной{" "}
-                        <span className="dashMarketClosedWhen">{marketStatus.nextOpenText || "в понедельник 09:00"}</span>{" "}
+                        Market closed (weekend). Trading will be available{" "}
+                        <span className="dashMarketClosedWhen">{marketStatus.nextOpenText || "Monday 09:00"}</span>{" "}
                         (Berlin).
                       </div>
                     </div>
