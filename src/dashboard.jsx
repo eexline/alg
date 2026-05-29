@@ -10,9 +10,15 @@ const emptyForm = {
   risk_percent: 1,
 };
 
-/** Fixed product: gold (XAUUSD) + aggressive engine (display: PHASE GOLD). */
-const TRADING_STRATEGY_LABEL = "PHASE GOLD";
+/** Fixed product: gold (XAUUSD); strategy label follows subscription tier. */
 const TRADING_INSTRUMENT_LABEL = "XAUUSD (Gold)";
+
+function strategyLabelForTier(tierKey) {
+  const t = String(tierKey || "").trim().toLowerCase();
+  if (t === "pro") return "PHASE PRO";
+  if (t === "elite") return "PHASE ELITE";
+  return "PHASE GOLD";
+}
 
 /** Keep “Connecting” UI visible at least this long (API may return faster). */
 const MIN_CONNECT_UI_MS = 3000;
@@ -225,10 +231,14 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const [tierLabel, setTierLabel] = useState(
     () => user?.subscription_tier_label || null,
   );
+  const [strategyLabel, setStrategyLabel] = useState(() =>
+    strategyLabelForTier(user?.subscription_tier),
+  );
 
   useEffect(() => {
     setTierLabel(user?.subscription_tier_label || null);
-  }, [user?.subscription_tier_label]);
+    setStrategyLabel(strategyLabelForTier(user?.subscription_tier));
+  }, [user?.subscription_tier, user?.subscription_tier_label]);
 
   // server selection modal removed (connect broker only)
   const avatarInputRef = useRef(null);
@@ -399,6 +409,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         return;
       }
       setTierLabel(me?.subscription_tier_label || null);
+      setStrategyLabel(strategyLabelForTier(me?.subscription_tier));
       setSessions(s);
       setAccounts(b);
       if (b.length) {
@@ -1164,7 +1175,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                   <div className="dashField dashBotRow">
                     <div className="dashFieldBody">
                       <label>Strategy</label>
-                      <span className="dashBotRowValue">{TRADING_STRATEGY_LABEL}</span>
+                      <span className="dashBotRowValue">{strategyLabel}</span>
                     </div>
                     <span className="dashFieldChevron" aria-hidden="true">
                       ›
