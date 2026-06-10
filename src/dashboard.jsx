@@ -17,7 +17,7 @@ function strategyLabelForTier(tierKey) {
   const t = String(tierKey || "").trim().toLowerCase();
   if (t === "pro") return "PHASE PRO";
   if (t === "elite") return "PHASE ELITE";
-  return "PHASE GOLD";
+  return "PHASE START";
 }
 
 /** Keep “Connecting” UI visible at least this long (API may return faster). */
@@ -289,7 +289,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     void nowTick;
     const s = getWeekendMarketStatusBerlin(new Date());
     const nextOpenText = s.closed && s.nextOpenUtcMs
-      ? new Intl.DateTimeFormat("ru-RU", {
+      ? new Intl.DateTimeFormat("en-GB", {
           timeZone: BERLIN_TZ,
           weekday: "long",
           year: "numeric",
