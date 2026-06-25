@@ -18,8 +18,9 @@ export default function App() {
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
-    prepareTelegramWebAppViewport();
+    const cleanup = prepareTelegramWebAppViewport();
     applyTheme();
+    return cleanup;
   }, []);
 
   useEffect(() => {

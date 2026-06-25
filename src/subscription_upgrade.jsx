@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.js";
+import {
+  applyTelegramViewportCss,
+  getTelegramWebApp,
+  isTelegramKeyboardOpen,
+} from "./telegram_init.js";
 import "./subscription_upgrade.css";
 
 const DEFAULT_CHECKOUT = {
@@ -212,6 +217,7 @@ export default function SubscriptionUpgradeFlow({
   const [failReason, setFailReason] = useState("");
   const [checkout, setCheckout] = useState(DEFAULT_CHECKOUT);
   const [tierPrices, setTierPrices] = useState(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const verifyTimers = useRef([]);
   const pollCancelRef = useRef(false);
   const confettiRef = useRef(null);
@@ -265,6 +271,30 @@ export default function SubscriptionUpgradeFlow({
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setKeyboardOpen(false);
+      return undefined;
+    }
+
+    const tg = getTelegramWebApp();
+    const syncViewport = () => {
+      applyTelegramViewportCss(tg);
+      setKeyboardOpen(isTelegramKeyboardOpen(tg));
+    };
+
+    syncViewport();
+    tg?.onEvent?.("viewportChanged", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      vv?.removeEventListener("resize", syncViewport);
     };
   }, [open]);
 
@@ -373,10 +403,21 @@ export default function SubscriptionUpgradeFlow({
     const el = hashInputRef.current;
     const scroller = scrollRef.current;
     if (!el) return;
+    applyTelegramViewportCss();
     window.setTimeout(() => {
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
       scroller?.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
-    }, 280);
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      } catch {
+        /* input only */
+      }
+    }, 320);
   }
 
   function closeFlow() {
@@ -428,7 +469,11 @@ export default function SubscriptionUpgradeFlow({
   const ringOffset = 295 - (295 * ringPct) / 100;
 
   return (
-    <div className="subUpgOverlay" role="dialog" aria-modal="true">
+    <div
+      className={`subUpgOverlay${keyboardOpen ? " subUpgKeyboardOpen" : ""}`}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="subUpgShell">
         <div className="subUpgHdr">
           <span className="subUpgHdrTitle">
