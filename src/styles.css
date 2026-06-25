@@ -437,6 +437,12 @@ button.licenseBtn {
     0 8px 18px rgba(0, 0, 0, 0.3);
 }
 
+.licenseBtn.licenseBtnPrimary,
+.licenseBtn.licenseBtnPrimary .licenseBtnLabel,
+.licenseBtn.licenseBtnPrimary .licenseBtnArrow {
+  color: #111111;
+}
+
 .licenseBtnSecondary {
   background: linear-gradient(180deg, #171717 0%, #090909 100%);
   border-color: rgba(255, 255, 255, 0.16);

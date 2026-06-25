@@ -3,9 +3,13 @@
   position: fixed;
   inset: 0;
   z-index: 120;
-  background: rgba(6, 8, 12, 0.92);
+  background: #06080c;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--tg-viewport-stable-height, 100dvh);
+  overflow: hidden;
   animation: subUpgFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -27,6 +31,8 @@
   margin: 0 auto;
   overflow: hidden;
   color: #f4f4f6;
+  background: #06080c;
+  min-height: 0;
 }
 
 .subUpgHdr {
@@ -47,14 +53,17 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
   background: #191920;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #e8e8ec;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 7px 13px;
   border-radius: 11px;
   font-size: 12px;
   font-weight: 600;
-  color: #9494a0;
-  cursor: pointer;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .subUpgBack:active {
@@ -63,9 +72,11 @@
 
 .subUpgScroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 18px 24px;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 18px calc(28px + env(safe-area-inset-bottom, 0px));
 }
 
 .subUpgGoldTxt {
@@ -76,7 +87,7 @@
 }
 
 .subUpgAnim {
-  animation: subUpgFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation: subUpgFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .subUpgAnim:nth-child(1) {
@@ -513,15 +524,18 @@
 .subUpgFieldWrap {
   position: relative;
   margin-bottom: 10px;
+  scroll-margin-bottom: 140px;
 }
 
 .subUpgField {
   width: 100%;
+  box-sizing: border-box;
   background: #191920;
-  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   color: #f4f4f6;
-  font-size: 14px;
+  font-size: 13px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   padding: 14px 15px;
 }
 
@@ -550,13 +564,15 @@
 /* Verify */
 .subUpgVerifyWrap {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  padding: 18px 22px 28px;
+  padding: 18px 22px calc(28px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
+  background: #06080c;
 }
 
 .subUpgRing {
@@ -705,6 +721,7 @@
   padding: 22px 18px 28px;
   position: relative;
   overflow-y: auto;
+  background: #06080c;
 }
 
 .subUpgConfetti {
@@ -797,6 +814,7 @@
   text-align: center;
   padding: 20px 22px 28px;
   overflow-y: auto;
+  background: #06080c;
 }
 
 .subUpgFX {

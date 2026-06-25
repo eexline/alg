@@ -7,54 +7,52 @@ const DEFAULT_CHECKOUT = {
   network: "TRC-20",
 };
 
-const TIER_RANK = { start: 0, pro: 1, elite: 2 };
+const PURCHASE_TIER = "elite";
 
 export const TIER_PLANS = {
-  start: {
-    id: "start",
-    label: "PHASE START",
-    price: 99,
-    note: "LiqSweep strategy · M5 entries",
-    features: [
-      "XAUUSD trading robot access",
-      "Liquidity sweep + FVG + Asian breakout",
-      "Smart risk management",
-    ],
-    badge: null,
-  },
-  pro: {
-    id: "pro",
-    label: "PHASE PRO",
-    price: 179,
-    note: "Dual-direction grid · M5",
-    features: [
-      "Everything in START",
-      "Dual grid on gold",
-      "Basket take-profit management",
-    ],
-    badge: "Popular",
-  },
   elite: {
     id: "elite",
     label: "PHASE ELITE",
     price: 249,
-    note: "RSI grid · progressive lot",
+    note: "Full access · XAUUSD trading robot",
     features: [
-      "Everything in PRO",
-      "RSI one-sided grid",
+      "XAUUSD trading robot access",
+      "RSI grid with progressive lot",
       "Priority execution profile",
     ],
-    badge: "Best offer",
+    badge: null,
   },
 };
-
-function tierRank(tier) {
-  return TIER_RANK[String(tier || "start").toLowerCase()] ?? 0;
-}
 
 function planPrice(tierId, priceOverrides) {
   const p = priceOverrides?.[tierId]?.price_usdt;
   return p != null ? p : TIER_PLANS[tierId]?.price ?? 0;
+}
+
+function applyVerifyProgress(res, setVSteps, setRingPct) {
+  const stage = res?.verify_stage;
+  if (res?.status === "confirmed") {
+    setVSteps([2, 2, 2]);
+    setRingPct(100);
+    return;
+  }
+  if (stage === "activating") {
+    setVSteps([2, 2, 1]);
+    setRingPct(88);
+    return;
+  }
+  if (stage === "confirming") {
+    setVSteps([2, 1, 0]);
+    setRingPct(62);
+    return;
+  }
+  if (stage === "broadcast") {
+    setVSteps([2, 0, 0]);
+    setRingPct(34);
+    return;
+  }
+  setVSteps([1, 0, 0]);
+  setRingPct(12);
 }
 
 function parseApiError(e) {
@@ -144,9 +142,8 @@ export function ProfileSubscriptionCard({
   hasActiveAccess,
   onUpgrade,
 }) {
-  const tier = String(currentTier || "start").toLowerCase();
-  const plan = TIER_PLANS[tier] || TIER_PLANS.start;
-  const isMax = tierRank(tier) >= tierRank("elite");
+  const plan = TIER_PLANS.elite;
+  const tier = String(currentTier || "elite").toLowerCase();
 
   return (
     <div className="profileSubCard">
@@ -182,7 +179,7 @@ export function ProfileSubscriptionCard({
         className="subUpgBtnGold profileSubUpgradeBtn"
         onClick={onUpgrade}
       >
-        {isMax ? "Renew plan" : "Upgrade plan"}
+        Renew plan
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>
@@ -218,13 +215,15 @@ export default function SubscriptionUpgradeFlow({
   const verifyTimers = useRef([]);
   const pollCancelRef = useRef(false);
   const confettiRef = useRef(null);
+  const hashInputRef = useRef(null);
+  const scrollRef = useRef(null);
 
   const reset = useCallback(() => {
     verifyTimers.current.forEach(clearTimeout);
     verifyTimers.current = [];
     pollCancelRef.current = true;
-    setScene("plans");
-    setSelectedTier(null);
+    setScene("checkout");
+    setSelectedTier(PURCHASE_TIER);
     setTxHash("");
     setHashErr(false);
     setCopyOk(false);
@@ -245,6 +244,8 @@ export default function SubscriptionUpgradeFlow({
       return;
     }
     pollCancelRef.current = false;
+    setSelectedTier(PURCHASE_TIER);
+    setScene("checkout");
     api
       .paymentsConfig()
       .then((cfg) => {
@@ -259,6 +260,15 @@ export default function SubscriptionUpgradeFlow({
   }, [open, reset]);
 
   useEffect(() => {
+    if (!open) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
     if (scene === "success" && confettiRef.current) {
       fireConfetti(confettiRef.current);
     }
@@ -266,9 +276,8 @@ export default function SubscriptionUpgradeFlow({
 
   if (!open) return null;
 
-  const curRank = tierRank(currentTier);
-  const plan = selectedTier ? TIER_PLANS[selectedTier] : null;
-  const checkoutPrice = selectedTier ? planPrice(selectedTier, tierPrices) : 0;
+  const plan = TIER_PLANS[PURCHASE_TIER];
+  const checkoutPrice = planPrice(PURCHASE_TIER, tierPrices);
 
   function markStep(n) {
     setStep(n);
@@ -285,14 +294,6 @@ export default function SubscriptionUpgradeFlow({
     setTimeout(() => setCopyOk(false), 2000);
   }
 
-  function selectPlan(tierId) {
-    setSelectedTier(tierId);
-    setScene("checkout");
-    setStep(1);
-    setTxHash("");
-    setHashErr(false);
-  }
-
   function verifyPayment() {
     const h = txHash.trim();
     if (h.length < 10) {
@@ -303,25 +304,7 @@ export default function SubscriptionUpgradeFlow({
     setHashErr(false);
     markAllStepsDone();
     setScene("verify");
-    startVerify(h, selectedTier);
-  }
-
-  function animateRing(from, to, dur) {
-    const start = performance.now();
-    function frame(t) {
-      const k = Math.min(1, (t - start) / dur);
-      setRingPct(from + (to - from) * k);
-      if (k < 1) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  }
-
-  function setVStepState(idx, state) {
-    setVSteps((prev) => {
-      const next = [...prev];
-      next[idx] = state;
-      return next;
-    });
+    startVerify(h, PURCHASE_TIER);
   }
 
   function finishConfirmed(res) {
@@ -343,6 +326,7 @@ export default function SubscriptionUpgradeFlow({
       if (pollCancelRef.current) return;
       try {
         const res = await api.verifyPayment(hash, tier);
+        applyVerifyProgress(res, setVSteps, setRingPct);
         if (res.status === "confirmed") {
           finishConfirmed(res);
           return;
@@ -375,27 +359,6 @@ export default function SubscriptionUpgradeFlow({
     setFailReason("");
     setVSteps([1, 0, 0]);
 
-    verifyTimers.current.push(
-      setTimeout(() => {
-        animateRing(0, 34, 1000);
-        setVStepState(0, 2);
-        setVStepState(1, 1);
-      }, 1400),
-    );
-    verifyTimers.current.push(
-      setTimeout(() => {
-        animateRing(34, 72, 1500);
-        setVStepState(1, 2);
-        setVStepState(2, 1);
-      }, 4200),
-    );
-    verifyTimers.current.push(
-      setTimeout(() => {
-        animateRing(72, 100, 900);
-        setVStepState(2, 2);
-      }, 6200),
-    );
-
     (async () => {
       try {
         if (onEnsureAuth) await onEnsureAuth();
@@ -404,6 +367,23 @@ export default function SubscriptionUpgradeFlow({
         finishFailed(parseApiError(e));
       }
     })();
+  }
+
+  function focusHashField() {
+    const el = hashInputRef.current;
+    const scroller = scrollRef.current;
+    if (!el) return;
+    window.setTimeout(() => {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      scroller?.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+    }, 280);
+  }
+
+  function closeFlow() {
+    pollCancelRef.current = true;
+    verifyTimers.current.forEach(clearTimeout);
+    verifyTimers.current = [];
+    onClose?.();
   }
 
   async function activateKey() {
@@ -429,11 +409,8 @@ export default function SubscriptionUpgradeFlow({
   }
 
   function back() {
-    if (scene === "checkout") {
-      setScene("plans");
-      return;
-    }
     if (scene === "verify") {
+      pollCancelRef.current = true;
       setScene("checkout");
       return;
     }
@@ -441,7 +418,11 @@ export default function SubscriptionUpgradeFlow({
       setScene("checkout");
       return;
     }
-    onClose?.();
+    if (scene === "success") {
+      onClose?.();
+      return;
+    }
+    closeFlow();
   }
 
   const ringOffset = 295 - (295 * ringPct) / 100;
@@ -451,83 +432,32 @@ export default function SubscriptionUpgradeFlow({
       <div className="subUpgShell">
         <div className="subUpgHdr">
           <span className="subUpgHdrTitle">
-            {scene === "plans" && "Upgrade"}
             {scene === "checkout" && "Checkout"}
             {scene === "verify" && "Verification"}
             {scene === "success" && "Confirmed"}
             {scene === "failed" && "Payment"}
           </span>
           <button type="button" className="subUpgBack" onClick={back}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            Back
+            {scene === "checkout" || scene === "verify" ? (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+                Close
+              </>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Back
+              </>
+            )}
           </button>
         </div>
 
-        {scene === "plans" && (
-          <div className="subUpgScroll">
-            <div className="subUpgAnim" style={{ margin: "8px 0 16px" }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700 }}>Choose your plan</h2>
-              <p style={{ color: "#9494a0", fontSize: 12.5, marginTop: 3 }}>
-                Monthly subscription · pay with USDT
-              </p>
-            </div>
-            {(["start", "pro", "elite"]).map((tid) => {
-              const p = TIER_PLANS[tid];
-              const price = planPrice(tid, tierPrices);
-              const rank = tierRank(tid);
-              const isCurrent = rank === curRank;
-              const isUpgrade = rank > curRank;
-              const isRenew = rank === curRank;
-              return (
-                <div
-                  key={tid}
-                  className={`subUpgPlan subUpgAnim${isCurrent ? " isCurrent" : ""}`}
-                >
-                  {p.badge ? (
-                    <span className="subUpgPlanBadge">{p.badge}</span>
-                  ) : null}
-                  <div className="subUpgPlanName subUpgGoldTxt">{p.label}</div>
-                  <div className="subUpgPlanPrice">
-                    <b>${price}</b>
-                    <span>/ month</span>
-                  </div>
-                  <div className="subUpgPlanNote">{p.note}</div>
-                  {p.features.map((f) => (
-                    <div key={f} className="subUpgFeat">
-                      <span className="subUpgFeatChk">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                          <path d="M5 12l5 5L20 6" />
-                        </svg>
-                      </span>
-                      {f}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="subUpgBtnGold"
-                    style={{ marginTop: 12 }}
-                    disabled={!isUpgrade && !isRenew}
-                    onClick={() => selectPlan(tid)}
-                  >
-                    {isCurrent
-                      ? "Renew this plan"
-                      : isUpgrade
-                        ? `Upgrade to ${p.label.split(" ").pop()}`
-                        : "Current plan"}
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                      <path d="M5 12h14M13 6l6 6-6 6" />
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {scene === "checkout" && plan && (
-          <div className="subUpgScroll">
+          <div className="subUpgScroll" ref={scrollRef}>
             <div className="subUpgStepper subUpgAnim">
               <div className={`subUpgStep${step === 1 ? " on" : ""}${step > 1 ? " done" : ""}`}>
                 <div className="subUpgStepDot">{step > 1 ? "✓" : "1"}</div>
@@ -585,9 +515,16 @@ export default function SubscriptionUpgradeFlow({
             <div className="subUpgPayLbl subUpgAnim">Transaction hash</div>
             <div className="subUpgFieldWrap subUpgAnim">
               <input
+                ref={hashInputRef}
                 className="subUpgField"
                 value={txHash}
                 placeholder="Paste hash after payment"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                inputMode="text"
+                onFocus={focusHashField}
                 onChange={(e) => {
                   setTxHash(e.target.value);
                   if (e.target.value.trim().length > 10) markStep(3);
@@ -646,13 +583,27 @@ export default function SubscriptionUpgradeFlow({
             </div>
             <div className="subUpgVSteps">
               {[
-                ["Transaction broadcast", "Sent to TRON network"],
-                ["Block confirmation", "Awaiting confirmations"],
-                ["License activation", "Ready to apply key"],
-              ].map(([name, meta], i) => {
+                ["Transaction broadcast", "Looking up hash on TRON network"],
+                ["Block confirmation", "Waiting for block confirmations"],
+                ["License activation", "Activating your subscription"],
+              ].map(([name, defaultMeta], i) => {
                 const st = vSteps[i];
                 const cls =
                   st === 3 ? " fail" : st === 2 ? " ok" : st === 1 ? " on" : "";
+                const meta =
+                  st === 2
+                    ? i === 0
+                      ? "Found on TRON network"
+                      : i === 1
+                        ? "Payment amount confirmed"
+                        : "Subscription activated"
+                    : st === 1
+                      ? i === 0
+                        ? "Checking blockchain..."
+                        : i === 1
+                          ? "Awaiting confirmations..."
+                          : "Applying license key..."
+                      : defaultMeta;
                 return (
                   <div key={name} className={`subUpgVStep${cls}`}>
                     <div className="subUpgVStepIco">●</div>
@@ -757,7 +708,7 @@ export default function SubscriptionUpgradeFlow({
               onClick={() => {
                 if (selectedTier && txHash.trim()) {
                   setScene("verify");
-                  startVerify(txHash.trim(), selectedTier);
+                  startVerify(txHash.trim(), PURCHASE_TIER);
                 } else {
                   setScene("checkout");
                 }
