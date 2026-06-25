@@ -374,10 +374,12 @@ h1 {
   color: rgba(255, 255, 255, 0.5);
 }
 
-a.licenseBtn {
+a.licenseBtn,
+button.licenseBtn {
   text-decoration: none;
   color: inherit;
   box-sizing: border-box;
+  font: inherit;
 }
 
 .licenseBtn.licenseBtnBlocked {

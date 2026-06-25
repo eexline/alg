@@ -1,0 +1,844 @@
+/* Subscription upgrade / checkout flow (from index mock) */
+.subUpgOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(6, 8, 12, 0.92);
+  display: flex;
+  flex-direction: column;
+  animation: subUpgFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes subUpgFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.subUpgShell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  color: #f4f4f6;
+}
+
+.subUpgHdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 6px;
+  flex-shrink: 0;
+}
+
+.subUpgHdrTitle {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.subUpgBack {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #191920;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 7px 13px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9494a0;
+  cursor: pointer;
+}
+
+.subUpgBack:active {
+  transform: scale(0.95);
+}
+
+.subUpgScroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 18px 24px;
+}
+
+.subUpgGoldTxt {
+  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subUpgAnim {
+  animation: subUpgFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.subUpgAnim:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.subUpgAnim:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.subUpgAnim:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.subUpgAnim:nth-child(4) {
+  animation-delay: 0.22s;
+}
+
+@keyframes subUpgFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subUpgPop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes subUpgShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes subUpgSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Subscription card in profile */
+.profileSubCard {
+  background: linear-gradient(150deg, #191510, #101015);
+  border: 1.5px solid rgba(217, 182, 90, 0.26);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  margin-bottom: 14px;
+}
+
+.profileSubCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.profileSubCardTitle {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.profileSubBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #34c759;
+}
+
+.profileSubBadge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34c759;
+  box-shadow: 0 0 9px #34c759;
+  animation: subUpgBlink 1.5s infinite;
+}
+
+@keyframes subUpgBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.profileSubRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.profileSubRow:last-of-type {
+  border-bottom: none;
+}
+
+.profileSubRowK {
+  color: #9494a0;
+}
+
+.profileSubRowV {
+  font-weight: 600;
+}
+
+.profileSubUpgradeBtn {
+  margin-top: 14px;
+  width: 100%;
+}
+
+/* Plan card */
+.subUpgPlan {
+  position: relative;
+  background: linear-gradient(170deg, #191510, #101015);
+  border: 1.5px solid rgba(217, 182, 90, 0.26);
+  border-radius: 22px;
+  padding: 22px 18px 18px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.subUpgPlan::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d9b65a, transparent);
+}
+
+.subUpgPlan.isCurrent {
+  opacity: 0.72;
+}
+
+.subUpgPlanBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  color: #1a1305;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  padding: 5px 12px;
+  border-radius: 24px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.subUpgPlanName {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.subUpgPlanPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 7px 0 3px;
+}
+
+.subUpgPlanPrice b {
+  font-weight: 800;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.subUpgPlanPrice span {
+  color: #9494a0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.subUpgPlanNote {
+  font-size: 11.5px;
+  color: #62626e;
+  margin-bottom: 14px;
+}
+
+.subUpgFeat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 9px;
+}
+
+.subUpgFeatChk {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(217, 182, 90, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #f0d285;
+}
+
+.subUpgBtnGold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  color: #1a1305;
+  box-shadow: 0 8px 24px -10px rgba(217, 182, 90, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgBtnGold::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: subUpgShimmer 3.5s infinite;
+}
+
+.subUpgBtnGold:active {
+  transform: scale(0.98);
+}
+
+.subUpgBtnGold:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Stepper */
+.subUpgStepper {
+  display: flex;
+  align-items: center;
+  margin: 6px 2px 18px;
+}
+
+.subUpgStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.subUpgStepDot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #191920;
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #62626e;
+  transition: 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgStep.on .subUpgStepDot {
+  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  border-color: transparent;
+  color: #1a1305;
+  transform: scale(1.05);
+}
+
+.subUpgStep.done .subUpgStepDot {
+  background: rgba(217, 182, 90, 0.1);
+  border-color: rgba(217, 182, 90, 0.26);
+}
+
+.subUpgStepLbl {
+  font-size: 9.5px;
+  color: #62626e;
+  font-weight: 600;
+}
+
+.subUpgStep.on .subUpgStepLbl {
+  color: #f0d285;
+}
+
+.subUpgStepBar {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 5px 22px;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgStepBar i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgStepBar.fill i {
+  transform: scaleX(1);
+}
+
+.subUpgPayBlock {
+  background: #121216;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 13px 15px;
+  margin-bottom: 11px;
+}
+
+.subUpgPayBlock.gold {
+  background: linear-gradient(150deg, #191510, #101015);
+  border-color: rgba(217, 182, 90, 0.26);
+}
+
+.subUpgPayLbl {
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #62626e;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.subUpgPayTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.subUpgPayNet {
+  font-size: 10.5px;
+  color: #f0d285;
+  background: rgba(217, 182, 90, 0.1);
+  padding: 3px 8px;
+  border-radius: 7px;
+  font-weight: 600;
+}
+
+.subUpgPayAmount {
+  font-weight: 800;
+  font-size: 26px;
+}
+
+.subUpgPayAmount span {
+  font-size: 14px;
+  color: #9494a0;
+  font-weight: 600;
+}
+
+.subUpgPayAddr {
+  font-size: 12.5px;
+  word-break: break-all;
+  line-height: 1.5;
+  margin: 9px 0 11px;
+}
+
+.subUpgCopy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: #222229;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0d285;
+  cursor: pointer;
+}
+
+.subUpgCopy.ok {
+  background: rgba(52, 199, 89, 0.13);
+  color: #34c759;
+  border-color: transparent;
+}
+
+.subUpgHint {
+  display: flex;
+  gap: 9px;
+  background: rgba(217, 182, 90, 0.1);
+  border: 1px solid rgba(217, 182, 90, 0.26);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: #9494a0;
+  line-height: 1.5;
+}
+
+.subUpgHint b {
+  color: #f0d285;
+}
+
+.subUpgFieldWrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.subUpgField {
+  width: 100%;
+  background: #191920;
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  color: #f4f4f6;
+  font-size: 14px;
+  padding: 14px 15px;
+}
+
+.subUpgField:focus {
+  border-color: rgba(217, 182, 90, 0.26);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(217, 182, 90, 0.1);
+}
+
+.subUpgFieldErr {
+  font-size: 11.5px;
+  color: #ff453a;
+  font-weight: 600;
+  margin: -2px 2px 12px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgFieldErr.show {
+  max-height: 30px;
+  opacity: 1;
+}
+
+/* Verify */
+.subUpgVerifyWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px 22px 28px;
+  overflow-y: auto;
+}
+
+.subUpgRing {
+  width: 108px;
+  height: 108px;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.subUpgRing svg {
+  transform: rotate(-90deg);
+}
+
+.subUpgRingPct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 23px;
+}
+
+.subUpgRingPct.fail {
+  color: #ff453a;
+}
+
+.subUpgVTitle {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.subUpgVSub {
+  color: #9494a0;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  max-width: 270px;
+}
+
+.subUpgVSteps {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.subUpgVStep {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: #121216;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 11px 13px;
+  opacity: 0.4;
+  transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgVStep.on {
+  opacity: 1;
+  border-color: rgba(217, 182, 90, 0.26);
+  background: #191920;
+}
+
+.subUpgVStep.ok .subUpgVStepIco {
+  background: rgba(52, 199, 89, 0.13);
+  color: #34c759;
+}
+
+.subUpgVStep.fail {
+  opacity: 1;
+  border-color: rgba(255, 69, 58, 0.3);
+}
+
+.subUpgVStepIco {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #222229;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #62626e;
+}
+
+.subUpgVStep.on .subUpgVStepIco {
+  background: rgba(217, 182, 90, 0.1);
+  color: #f0d285;
+}
+
+.subUpgVStepTxt {
+  flex: 1;
+  text-align: left;
+}
+
+.subUpgVStepName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.subUpgVStepMeta {
+  font-size: 10.5px;
+  color: #62626e;
+}
+
+.subUpgMiniSpin {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.11);
+  border-top-color: #f0d285;
+  border-radius: 50%;
+  animation: subUpgSpin 0.8s linear infinite;
+  display: none;
+}
+
+.subUpgVStep.on .subUpgMiniSpin {
+  display: block;
+}
+
+.subUpgVStep.ok .subUpgMiniSpin,
+.subUpgVStep.fail .subUpgMiniSpin {
+  display: none;
+}
+
+.subUpgVsCheck {
+  display: none;
+  color: #34c759;
+}
+
+.subUpgVStep.ok .subUpgVsCheck {
+  display: block;
+}
+
+/* Success */
+.subUpgSuccessWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 22px 18px 28px;
+  position: relative;
+  overflow-y: auto;
+}
+
+.subUpgConfetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.subUpgSCheck {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(217, 182, 90, 0.1);
+  border: 2px solid rgba(217, 182, 90, 0.26);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  animation: subUpgPop 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: 0.1s;
+  position: relative;
+  z-index: 2;
+  color: #f0d285;
+}
+
+.subUpgSTitle {
+  font-weight: 800;
+  font-size: 23px;
+  margin-bottom: 16px;
+  z-index: 2;
+}
+
+.subUpgSPlan {
+  width: 100%;
+  max-width: 290px;
+  background: linear-gradient(150deg, #191510, #101015);
+  border: 1px solid rgba(217, 182, 90, 0.26);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 18px;
+  z-index: 2;
+  text-align: left;
+}
+
+.subUpgSKey {
+  width: 100%;
+  max-width: 290px;
+  background: #121216;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  z-index: 2;
+  text-align: left;
+}
+
+.subUpgSKeyLbl {
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #62626e;
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+
+.subUpgSKeyNote {
+  font-size: 10.5px;
+  color: #62626e;
+  line-height: 1.45;
+  margin-top: 9px;
+}
+
+.subUpgActivateErr {
+  width: 100%;
+  max-width: 290px;
+  font-size: 12px;
+  color: #ff453a;
+  margin-bottom: 10px;
+  z-index: 2;
+}
+
+/* Failed */
+.subUpgFailWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px 22px 28px;
+  overflow-y: auto;
+}
+
+.subUpgFX {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(255, 69, 58, 0.11);
+  border: 2px solid rgba(255, 69, 58, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  animation: subUpgPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  color: #ff453a;
+}
+
+.subUpgFTitle {
+  font-weight: 800;
+  font-size: 23px;
+  margin-bottom: 9px;
+}
+
+.subUpgFSub {
+  color: #9494a0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+.subUpgBtnGhost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: #9494a0;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
 import { getTelegramUser } from "./telegram_init.js";
+import SubscriptionUpgradeFlow, {
+  ProfileSubscriptionCard,
+} from "./subscription_upgrade.jsx";
 
 const emptyForm = {
   broker_name: "",
@@ -250,6 +253,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     }
   });
   const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [usernameOverride, setUsernameOverride] = useState(() => {
     try {
       return localStorage.getItem("profile_username_override") || "";
@@ -878,6 +882,31 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       </div>
                     </div>
                   )}
+
+                  <ProfileSubscriptionCard
+                    currentTier={user?.subscription_tier}
+                    tierLabel={tierLabel || strategyLabel}
+                    accessExpiresAt={user?.access_expires_at}
+                    hasActiveAccess={hasActiveAccess}
+                    onUpgrade={() => setUpgradeOpen(true)}
+                  />
+
+                  <SubscriptionUpgradeFlow
+                    open={upgradeOpen}
+                    onClose={() => setUpgradeOpen(false)}
+                    currentTier={user?.subscription_tier}
+                    onRedeemCode={async (code) => {
+                      try {
+                        await api.redeemCode(code);
+                        onRefresh?.();
+                        return { ok: true };
+                      } catch (e) {
+                        return { ok: false, error: String(e.message || e) };
+                      }
+                    }}
+                    onEnsureAuth={async () => {}}
+                    onPaymentComplete={() => onRefresh?.()}
+                  />
 
                   <div className="profileRefCard">
                     <div className="profileRefCardHead">

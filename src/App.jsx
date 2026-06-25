@@ -7,34 +7,19 @@ import {
 import { api } from "./api.js";
 import LicenseAccess, { LICENSE_MIN_VERIFY_MS } from "./license_access.jsx";
 import Dashboard from "./dashboard.jsx";
+import SubscriptionUpgradeFlow from "./subscription_upgrade.jsx";
 
 const DEMO_TOKEN_KEY = "access_token";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [tick, setTick] = useState(0);
-  const [licenseBuyUrl, setLicenseBuyUrl] = useState(null);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     prepareTelegramWebAppViewport();
     applyTheme();
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .licensePurchaseUrl()
-      .then((res) => {
-        const u = typeof res?.url === "string" ? res.url.trim() : "";
-        if (!cancelled) setLicenseBuyUrl(u || null);
-      })
-      .catch(() => {
-        if (!cancelled) setLicenseBuyUrl(null);
-      });
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {
@@ -104,34 +89,58 @@ export default function App() {
     }
   }
 
+  async function redeemLicenseCode(licenseCode) {
+    const flowStarted = performance.now();
+    try {
+      await loginWithTelegramInitData({ deferRefresh: true });
+      await api.redeemCode(licenseCode);
+      await waitMinVerify(flowStarted);
+      refresh();
+      return { ok: true };
+    } catch (e) {
+      if (String(e.message || e).includes("initData")) {
+        try {
+          await devDemoLogin({ deferRefresh: true });
+          await api.redeemCode(licenseCode);
+          await waitMinVerify(flowStarted);
+          refresh();
+          return { ok: true };
+        } catch (devErr) {
+          return { ok: false, error: String(devErr.message || devErr) };
+        }
+      }
+      return { ok: false, error: String(e.message || e) };
+    }
+  }
+
+  async function ensureAuthForPayment() {
+    try {
+      await loginWithTelegramInitData({ deferRefresh: true });
+    } catch (e) {
+      if (String(e.message || e).includes("initData")) {
+        await devDemoLogin({ deferRefresh: true });
+      } else {
+        throw e;
+      }
+    }
+  }
+
   if (!user || !user.has_access) {
     return (
-      <LicenseAccess
-        buyUrl={licenseBuyUrl}
-        onActivate={async (licenseCode) => {
-          const flowStarted = performance.now();
-          try {
-            await loginWithTelegramInitData({ deferRefresh: true });
-            await api.redeemCode(licenseCode);
-            await waitMinVerify(flowStarted);
-            refresh();
-            return { ok: true };
-          } catch (e) {
-            if (String(e.message || e).includes("initData")) {
-              try {
-                await devDemoLogin({ deferRefresh: true });
-                await api.redeemCode(licenseCode);
-                await waitMinVerify(flowStarted);
-                refresh();
-                return { ok: true };
-              } catch (devErr) {
-                return { ok: false, error: String(devErr.message || devErr) };
-              }
-            }
-            return { ok: false, error: String(e.message || e) };
-          }
-        }}
-      />
+      <>
+        <LicenseAccess
+          onBuyClick={() => setPurchaseOpen(true)}
+          onActivate={redeemLicenseCode}
+        />
+        <SubscriptionUpgradeFlow
+          open={purchaseOpen}
+          onClose={() => setPurchaseOpen(false)}
+          currentTier={user?.subscription_tier || "start"}
+          onRedeemCode={redeemLicenseCode}
+          onEnsureAuth={ensureAuthForPayment}
+          onPaymentComplete={() => refresh()}
+        />
+      </>
     );
   }
 

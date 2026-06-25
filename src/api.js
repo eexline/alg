@@ -16,11 +16,14 @@ async function request(path, opts = {}) {
     data = text;
   }
   if (!r.ok) {
-    const err = new Error(
-      typeof data === "object" && data?.detail
-        ? JSON.stringify(data.detail)
-        : text,
-    );
+    let detail = text;
+    if (typeof data === "object" && data?.detail != null) {
+      detail =
+        typeof data.detail === "string"
+          ? data.detail
+          : JSON.stringify(data.detail);
+    }
+    const err = new Error(detail);
     err.status = r.status;
     throw err;
   }
@@ -40,6 +43,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ code }),
     }),
+  verifyPayment: (txHash, tier) =>
+    request("/api/payments/verify", {
+      method: "POST",
+      body: JSON.stringify({ tx_hash: txHash, tier }),
+    }),
+  paymentsConfig: () => request("/api/payments/config"),
   listBrokers: () => request("/api/brokers/accounts"),
   mt5ServersCatalog: () => request("/api/brokers/catalog/servers"),
   addBroker: (body) =>
