@@ -48,6 +48,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ tx_hash: txHash, tier }),
     }),
+  paymentOpenRobot: () =>
+    request("/api/payments/open-robot", { method: "POST" }),
   paymentsConfig: () => request("/api/payments/config"),
   listBrokers: () => request("/api/brokers/accounts"),
   mt5ServersCatalog: () => request("/api/brokers/catalog/servers"),

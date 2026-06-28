@@ -489,22 +489,14 @@
   font-weight: 600;
 }
 
-.subUpgPayAmount {
-  font-weight: 800;
-  font-size: 26px;
-}
-
-.subUpgPayAmount span {
-  font-size: 14px;
-  color: #9494a0;
-  font-weight: 600;
-}
-
-.subUpgPayAddr {
-  font-size: 12.5px;
+.subUpgPayValue {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #f4f4f6;
   word-break: break-all;
-  line-height: 1.5;
-  margin: 9px 0 11px;
+  margin: 6px 0 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 .subUpgCopy {
@@ -513,6 +505,7 @@
   justify-content: center;
   gap: 6px;
   width: 100%;
+  margin-top: 4px;
   background: #222229;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 10px;
@@ -521,6 +514,8 @@
   font-weight: 600;
   color: #f0d285;
   cursor: pointer;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .subUpgCopy.ok {
@@ -531,19 +526,42 @@
 
 .subUpgHint {
   display: flex;
-  gap: 9px;
-  background: rgba(217, 182, 90, 0.1);
-  border: 1px solid rgba(217, 182, 90, 0.26);
+  align-items: flex-start;
+  gap: 11px;
+  background: #121216;
+  border: 1px solid rgba(217, 182, 90, 0.32);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 13px 14px;
   margin-bottom: 14px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: #9494a0;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.subUpgHintIco {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #d9b65a;
+  color: #d9b65a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.subUpgHint p {
+  margin: 0;
+  flex: 1;
 }
 
 .subUpgHint b {
   color: #f0d285;
+  font-weight: 700;
 }
 
 .subUpgFieldWrap {
@@ -818,6 +836,50 @@
   color: #62626e;
   line-height: 1.45;
   margin-top: 9px;
+}
+
+.subUpgSKeyRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subUpgSKeyVal {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #f0d285;
+  word-break: break-all;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.subUpgSKeyCopy {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #222229;
+  color: #f0d285;
+  cursor: pointer;
+}
+
+.subUpgSKeyCopy.ok {
+  color: #34c759;
+  border-color: rgba(52, 199, 89, 0.35);
+  background: rgba(52, 199, 89, 0.1);
+}
+
+.subUpgOpenRobotBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .subUpgActivateErr {

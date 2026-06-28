@@ -205,12 +205,15 @@ export default function SubscriptionUpgradeFlow({
   const [selectedTier, setSelectedTier] = useState(null);
   const [txHash, setTxHash] = useState("");
   const [hashErr, setHashErr] = useState(false);
-  const [copyOk, setCopyOk] = useState(false);
+  const [copyAmountOk, setCopyAmountOk] = useState(false);
+  const [copyAddrOk, setCopyAddrOk] = useState(false);
   const [step, setStep] = useState(1);
   const [ringPct, setRingPct] = useState(0);
   const [ringFail, setRingFail] = useState(false);
   const [vSteps, setVSteps] = useState([0, 0, 0]);
   const [licenseKey, setLicenseKey] = useState("");
+  const [accessExpiresAt, setAccessExpiresAt] = useState("");
+  const [copyKeyOk, setCopyKeyOk] = useState(false);
   const [activateErr, setActivateErr] = useState("");
   const [activating, setActivating] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
@@ -232,12 +235,15 @@ export default function SubscriptionUpgradeFlow({
     setSelectedTier(PURCHASE_TIER);
     setTxHash("");
     setHashErr(false);
-    setCopyOk(false);
+    setCopyAmountOk(false);
+    setCopyAddrOk(false);
     setStep(1);
     setRingPct(0);
     setRingFail(false);
     setVSteps([0, 0, 0]);
     setLicenseKey("");
+    setAccessExpiresAt("");
+    setCopyKeyOk(false);
     setActivateErr("");
     setActivating(false);
     setPaymentDone(false);
@@ -317,11 +323,18 @@ export default function SubscriptionUpgradeFlow({
     setStep(4);
   }
 
+  function copyAmount() {
+    navigator.clipboard?.writeText(String(checkoutPrice)).catch(() => {});
+    setCopyAmountOk(true);
+    markStep(1);
+    setTimeout(() => setCopyAmountOk(false), 2000);
+  }
+
   function copyWallet() {
     navigator.clipboard?.writeText(checkout.wallet).catch(() => {});
-    setCopyOk(true);
+    setCopyAddrOk(true);
     markStep(2);
-    setTimeout(() => setCopyOk(false), 2000);
+    setTimeout(() => setCopyAddrOk(false), 2000);
   }
 
   function verifyPayment() {
@@ -340,8 +353,26 @@ export default function SubscriptionUpgradeFlow({
   function finishConfirmed(res) {
     setPaymentDone(true);
     setLicenseKey(res?.code || "");
+    setAccessExpiresAt(res?.expires_at || "");
     setScene("success");
-    onPaymentComplete?.(res);
+  }
+
+  function copyLicenseKey() {
+    const key = licenseKey.trim();
+    if (!key) return;
+    navigator.clipboard?.writeText(key).catch(() => {});
+    setCopyKeyOk(true);
+    setTimeout(() => setCopyKeyOk(false), 2000);
+  }
+
+  async function openTradingRobot() {
+    try {
+      await api.paymentOpenRobot();
+    } catch {
+      /* still open dashboard if notify fails */
+    }
+    onClose?.();
+    onPaymentComplete?.();
   }
 
   function finishFailed(message) {
@@ -529,31 +560,46 @@ export default function SubscriptionUpgradeFlow({
                 <span className="subUpgPayLbl">Amount to pay</span>
                 <span className="subUpgPayNet">USDT · {checkout.network}</span>
               </div>
-              <div className="subUpgPayAmount">
-                ${checkoutPrice} <span>USDT</span>
-              </div>
+              <div className="subUpgPayValue">{checkoutPrice} USDT</div>
               <div className="subUpgPlanNote" style={{ marginTop: 8 }}>
                 {plan.label}
               </div>
+              <button
+                type="button"
+                className={`subUpgCopy${copyAmountOk ? " ok" : ""}`}
+                onClick={copyAmount}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                {copyAmountOk ? "Copied" : "Copy amount"}
+              </button>
             </div>
 
             <div className="subUpgPayBlock subUpgAnim">
               <div className="subUpgPayLbl">Wallet address</div>
-              <div className="subUpgPayAddr">{checkout.wallet}</div>
+              <div className="subUpgPayValue">{checkout.wallet}</div>
               <button
                 type="button"
-                className={`subUpgCopy${copyOk ? " ok" : ""}`}
+                className={`subUpgCopy${copyAddrOk ? " ok" : ""}`}
                 onClick={copyWallet}
               >
-                {copyOk ? "Copied" : "Copy address"}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                {copyAddrOk ? "Copied" : "Copy address"}
               </button>
             </div>
 
             <div className="subUpgHint subUpgAnim">
-              <span>ℹ️</span>
+              <span className="subUpgHintIco" aria-hidden="true">
+                !
+              </span>
               <p>
-                Send <b>${checkoutPrice} USDT</b> on <b>{checkout.network}</b>. Then paste the
-                transaction hash below to verify.
+                Send <b>${checkoutPrice} USDT</b> on the <b>{checkout.network} network</b>. Then
+                paste the transaction hash below to verify.
               </p>
             </div>
 
@@ -682,54 +728,56 @@ export default function SubscriptionUpgradeFlow({
                 {plan.label}
               </div>
               <div className="subUpgPlanNote">
-                {paymentDone
-                  ? "Your subscription is active. Save the license key below."
-                  : "Paste the license key you received after payment."}
+                Valid until {formatExpiry(accessExpiresAt)}
               </div>
             </div>
             {licenseKey ? (
               <div className="subUpgSKey">
-                <div className="subUpgSKeyLbl">License key</div>
-                <input
-                  className="subUpgField"
-                  value={licenseKey}
-                  readOnly={paymentDone}
-                  placeholder="Paste license key"
-                  onChange={(e) => {
-                    if (paymentDone) return;
-                    setLicenseKey(e.target.value);
-                    setActivateErr("");
-                  }}
-                />
+                <div className="subUpgSKeyLbl">Your access key</div>
+                <div className="subUpgSKeyRow">
+                  <div className="subUpgSKeyVal">{licenseKey}</div>
+                  <button
+                    type="button"
+                    className={`subUpgSKeyCopy${copyKeyOk ? " ok" : ""}`}
+                    onClick={copyLicenseKey}
+                    aria-label="Copy access key"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                </div>
                 <div className="subUpgSKeyNote">
-                  {paymentDone
-                    ? "Keep this key — each transaction hash can only be used once."
-                    : "Save it — the key upgrades your subscription tier after activation."}
+                  Save it — you can paste this key to activate the robot anytime.
                 </div>
               </div>
-            ) : null}
-            {activateErr ? (
-              <div className="subUpgActivateErr">{activateErr}</div>
             ) : null}
             {paymentDone ? (
               <button
                 type="button"
-                className="subUpgBtnGold"
+                className="subUpgBtnGold subUpgOpenRobotBtn"
                 style={{ maxWidth: 290, zIndex: 2 }}
-                onClick={() => onClose?.()}
+                onClick={openTradingRobot}
               >
-                Continue
+                Open trading robot
+                <span aria-hidden="true">→</span>
               </button>
             ) : (
-              <button
-                type="button"
-                className="subUpgBtnGold"
-                style={{ maxWidth: 290, zIndex: 2 }}
-                disabled={activating}
-                onClick={activateKey}
-              >
-                {activating ? "Activating…" : "Activate upgrade"}
-              </button>
+              <>
+                {activateErr ? (
+                  <div className="subUpgActivateErr">{activateErr}</div>
+                ) : null}
+                <button
+                  type="button"
+                  className="subUpgBtnGold"
+                  style={{ maxWidth: 290, zIndex: 2 }}
+                  disabled={activating}
+                  onClick={activateKey}
+                >
+                  {activating ? "Activating…" : "Activate upgrade"}
+                </button>
+              </>
             )}
           </div>
         )}

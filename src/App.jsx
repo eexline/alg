@@ -139,7 +139,10 @@ export default function App() {
           currentTier={user?.subscription_tier || "start"}
           onRedeemCode={redeemLicenseCode}
           onEnsureAuth={ensureAuthForPayment}
-          onPaymentComplete={() => refresh()}
+          onPaymentComplete={() => {
+            setPurchaseOpen(false);
+            refresh();
+          }}
         />
       </>
     );
