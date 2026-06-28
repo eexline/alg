@@ -807,7 +807,18 @@
   padding: 16px;
   margin-bottom: 18px;
   z-index: 2;
-  text-align: left;
+  text-align: center;
+}
+
+.subUpgSPlanName {
+  font-size: 18px;
+  margin: 4px 0 8px;
+}
+
+.subUpgSPlanUntil {
+  font-size: 12.5px;
+  color: #9494a0;
+  line-height: 1.45;
 }
 
 .subUpgSKey {
@@ -819,7 +830,7 @@
   padding: 14px 16px;
   margin-bottom: 16px;
   z-index: 2;
-  text-align: left;
+  text-align: center;
 }
 
 .subUpgSKeyLbl {
@@ -828,51 +839,21 @@
   text-transform: uppercase;
   color: #62626e;
   font-weight: 600;
-  margin-bottom: 9px;
-}
-
-.subUpgSKeyNote {
-  font-size: 10.5px;
-  color: #62626e;
-  line-height: 1.45;
-  margin-top: 9px;
-}
-
-.subUpgSKeyRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .subUpgSKeyVal {
-  flex: 1;
-  min-width: 0;
   font-size: 14px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.45;
   color: #f0d285;
   word-break: break-all;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  margin-bottom: 12px;
 }
 
-.subUpgSKeyCopy {
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #222229;
-  color: #f0d285;
-  cursor: pointer;
-}
-
-.subUpgSKeyCopy.ok {
-  color: #34c759;
-  border-color: rgba(52, 199, 89, 0.35);
-  background: rgba(52, 199, 89, 0.1);
+.subUpgSKeyCopyBtn {
+  margin-top: 0;
 }
 
 .subUpgOpenRobotBtn {

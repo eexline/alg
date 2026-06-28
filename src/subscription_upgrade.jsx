@@ -85,6 +85,19 @@ function formatExpiry(iso) {
   }
 }
 
+function formatActiveUntil(iso) {
+  if (!iso) return "—";
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return "—";
+  }
+}
+
 function fireConfetti(canvas) {
   if (!canvas) return;
   const parent = canvas.parentElement;
@@ -724,33 +737,28 @@ export default function SubscriptionUpgradeFlow({
             <h1 className="subUpgSTitle">Payment confirmed</h1>
             <div className="subUpgSPlan">
               <div className="subUpgPayLbl">Active plan</div>
-              <div className="subUpgPlanName subUpgGoldTxt" style={{ fontSize: 18 }}>
+              <div className="subUpgPlanName subUpgGoldTxt subUpgSPlanName">
                 {plan.label}
               </div>
-              <div className="subUpgPlanNote">
-                Valid until {formatExpiry(accessExpiresAt)}
+              <div className="subUpgSPlanUntil">
+                Active until {formatActiveUntil(accessExpiresAt)}
               </div>
             </div>
             {licenseKey ? (
               <div className="subUpgSKey">
                 <div className="subUpgSKeyLbl">Your access key</div>
-                <div className="subUpgSKeyRow">
-                  <div className="subUpgSKeyVal">{licenseKey}</div>
-                  <button
-                    type="button"
-                    className={`subUpgSKeyCopy${copyKeyOk ? " ok" : ""}`}
-                    onClick={copyLicenseKey}
-                    aria-label="Copy access key"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="subUpgSKeyNote">
-                  Save it — you can paste this key to activate the robot anytime.
-                </div>
+                <div className="subUpgSKeyVal">{licenseKey}</div>
+                <button
+                  type="button"
+                  className={`subUpgCopy subUpgSKeyCopyBtn${copyKeyOk ? " ok" : ""}`}
+                  onClick={copyLicenseKey}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  {copyKeyOk ? "Copied" : "Copy access key"}
+                </button>
               </div>
             ) : null}
             {paymentDone ? (
