@@ -78,7 +78,7 @@ button {
   color: #fff;
   border: none;
   padding: 0.6rem 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
 }
@@ -86,6 +86,46 @@ button {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Square action buttons + shimmer overlay (like Verify payment) */
+@keyframes appBtnShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.appBtnShine {
+  position: relative;
+  overflow: hidden;
+}
+
+.appBtnShine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.appBtnShineGhost::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
 }
 
 input,
@@ -411,7 +451,7 @@ button.licenseBtn {
 .licenseBtn {
   width: 100%;
   height: 48px;
-  border-radius: 24px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   cursor: pointer;
   font-size: 13px;
@@ -429,23 +469,23 @@ button.licenseBtn {
   overflow: hidden;
 }
 
-.licenseBtn::before {
+.licenseBtn::after {
   content: "";
   position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 62%;
-  height: 22px;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.26) 0%,
-    rgba(255, 255, 255, 0.08) 46%,
-    rgba(255, 255, 255, 0) 100%
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 65%
   );
-  opacity: 0.22;
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
   pointer-events: none;
+}
+
+.licenseBtn:active:not(:disabled):not(.licenseBtnBlocked) {
+  transform: scale(0.98);
 }
 
 .licenseBtnPrimary {
@@ -537,19 +577,9 @@ button.licenseBtn {
   cursor: wait;
 }
 
-.licenseBtnIsLoading::before {
-  opacity: 0.1;
-  animation: licenseBtnLoadingShine 2s ease-in-out infinite;
-}
-
-@keyframes licenseBtnLoadingShine {
-  0%,
-  100% {
-    opacity: 0.06;
-  }
-  50% {
-    opacity: 0.16;
-  }
+.licenseBtnIsLoading::after {
+  animation-duration: 1.4s;
+  opacity: 0.55;
 }
 
 /* Same horizontal width as .licenseRowPrimary / .licenseRowInput (84%) */
@@ -655,7 +685,22 @@ button.licenseBtn {
     border-top-color: rgba(0, 0, 0, 0.55);
   }
 
-  .licenseBtnIsLoading::before {
+  .licenseBtnIsLoading::after {
+    animation: none;
+    opacity: 0.4;
+  }
+
+  .licenseBtn::after,
+  .dashModalBtn::after,
+  .dashConnectSubmitBtn::after,
+  .dashConnectEditCancel::after,
+  .dashConnectLinkedAction::after,
+  .profileEditOutline::after,
+  .profileRefreshOutlineBtn::after,
+  .subUpgBtnGold::after,
+  .subUpgCopy::after,
+  .subUpgBtnGhost::after,
+  .subUpgBack::after {
     animation: none;
   }
 
@@ -1060,7 +1105,7 @@ button.licenseBtn {
   flex-shrink: 0;
   margin: 0;
   padding: 7px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.88);
@@ -1068,10 +1113,27 @@ button.licenseBtn {
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
     transform 0.12s ease;
+}
+
+.dashConnectEditCancel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
 }
 
 .dashConnectEditCancel:hover {
@@ -1323,10 +1385,31 @@ button.licenseBtn {
 .dashModalBtn {
   flex: 1;
   height: 40px;
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashModalBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.dashModalBtn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .dashModalBtnPrimary {
@@ -1340,6 +1423,16 @@ button.licenseBtn {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.dashModalBtnSecondary::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
 }
 
 /* Currency row (no native select dropdown) */
@@ -1470,7 +1563,7 @@ button.licenseBtn {
   margin-bottom: 0;
   width: 100%;
   height: 36px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: #f3f3f3;
   color: #111111;
@@ -1478,12 +1571,32 @@ button.licenseBtn {
   font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
-  /* более плоский вид как на референсе */
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashConnectSubmitBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.dashConnectSubmitBtn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .dashConnectSubmitBtn:hover:not(:disabled) {
@@ -1578,11 +1691,28 @@ button.licenseBtn {
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
     transform 0.12s ease;
   white-space: nowrap;
+}
+
+.dashConnectLinkedAction::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
 }
 
 .dashConnectLinkedAction:hover {
@@ -2273,7 +2403,7 @@ button.licenseBtn {
 .profileEditOutline {
   margin-top: 14px;
   padding: 10px 28px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;
   color: #ffffff;
@@ -2281,7 +2411,28 @@ button.licenseBtn {
   font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.profileEditOutline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.profileEditOutline:active {
+  transform: scale(0.98);
 }
 
 .profileEditOutline:hover {
@@ -2341,14 +2492,31 @@ button.licenseBtn {
 
 .profileRefreshOutlineBtn {
   padding: 6px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.profileRefreshOutlineBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
 }
 
 .profileRefreshOutlineBtn:hover {
@@ -2463,7 +2631,7 @@ button.licenseBtn {
   width: 100%;
   margin-bottom: 8px;
   height: 50px;
-  border-radius: 999px;
+  border-radius: 12px;
   letter-spacing: 0.01em;
   text-transform: none;
   font-size: 17px;
@@ -2475,9 +2643,8 @@ button.licenseBtn {
 }
 
 .dashBotStartBtn.licenseBtn {
-  /* сделаем кнопку Start как Connect (плоская) */
   height: 36px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(160, 245, 200, 0.48);
   background: linear-gradient(180deg, #45dc7c 0%, #2eb862 100%);
   color: #ffffff;
@@ -2489,7 +2656,6 @@ button.licenseBtn {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  overflow: visible;
 }
 
 .dashBotStartBtn.licenseBtn:hover:not(:disabled) {
@@ -2499,19 +2665,14 @@ button.licenseBtn {
   border-color: rgba(190, 255, 215, 0.55);
 }
 
-.dashBotStartBtn.licenseBtn::before {
-  opacity: 0;
-}
-
 .dashBotStartBtn.licenseBtn.dashConnectSubmitBtnLoading:disabled {
   opacity: 1;
   cursor: wait;
 }
 
 .dashBotStopBtn.licenseBtn {
-  /* same footprint as .dashBotStartBtn; red variant */
   height: 36px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 170, 185, 0.48);
   background: linear-gradient(180deg, #f06272 0%, #c93d4e 100%);
   color: #ffffff;
@@ -2523,7 +2684,6 @@ button.licenseBtn {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  overflow: visible;
 }
 
 .dashBotStopBtn.licenseBtn:hover:not(:disabled) {
@@ -2533,13 +2693,9 @@ button.licenseBtn {
   border-color: rgba(255, 200, 210, 0.55);
 }
 
-.dashBotStopBtn.licenseBtn::before {
-  opacity: 0;
-}
-
 .dashConnectBtn {
   height: 50px;
-  border-radius: 999px;
+  border-radius: 12px;
   margin-top: 2px;
 }
 

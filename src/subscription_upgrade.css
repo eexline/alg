@@ -83,11 +83,28 @@
   color: #e8e8ec;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 7px 13px;
-  border-radius: 11px;
+  border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: normal;
   text-transform: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgBack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
 }
 
 .subUpgBack:active {
@@ -150,15 +167,6 @@
   100% {
     transform: scale(1);
     opacity: 1;
-  }
-}
-
-@keyframes subUpgShimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
   }
 }
 
@@ -341,7 +349,7 @@
   gap: 8px;
   width: 100%;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
   border: none;
@@ -364,7 +372,7 @@
     transparent 65%
   );
   background-size: 220% 100%;
-  animation: subUpgShimmer 3.5s infinite;
+  animation: appBtnShimmer 3.5s infinite;
 }
 
 .subUpgBtnGold:active {
@@ -508,7 +516,7 @@
   margin-top: 4px;
   background: #222229;
   border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 9px;
   font-size: 12px;
   font-weight: 600;
@@ -516,6 +524,27 @@
   cursor: pointer;
   letter-spacing: normal;
   text-transform: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgCopy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.subUpgCopy:active {
+  transform: scale(0.98);
 }
 
 .subUpgCopy.ok {
@@ -921,10 +950,31 @@
   max-width: 300px;
   margin-top: 10px;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.11);
   color: #9494a0;
   font-weight: 600;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgBtnGhost::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.subUpgBtnGhost:active {
+  transform: scale(0.98);
 }

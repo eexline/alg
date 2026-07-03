@@ -220,6 +220,32 @@ body::before {
   cursor: pointer;
   font-family: inherit;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.adminTokensBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: adminBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes adminBtnShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .adminTokensBtnBlock {
@@ -249,10 +275,30 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.adminTokensBtnGhost::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+}
+
 .adminTokensBtnDanger {
   background: rgba(239, 68, 68, 0.18);
   color: #fecaca;
   border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.adminTokensBtnDanger::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
 }
 
 .adminTokensErr {
@@ -500,7 +546,7 @@ body::before {
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  border-radius: 10px;
+  border-radius: 12px;
   background: linear-gradient(
     180deg,
     rgba(239, 68, 68, 0.28) 0%,

@@ -17,6 +17,23 @@ export default function App() {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem(DEMO_TOKEN_KEY);
+    if (!token) {
+      setUser(null);
+      return null;
+    }
+    try {
+      const me = await api.me();
+      setUser(me);
+      return me;
+    } catch {
+      localStorage.removeItem(DEMO_TOKEN_KEY);
+      setUser(null);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     const cleanup = prepareTelegramWebAppViewport();
     applyTheme();
@@ -24,18 +41,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem(DEMO_TOKEN_KEY);
-    if (!token) {
-      setUser(null);
-      return;
-    }
-    api
-      .me()
-      .then(setUser)
-      .catch(() => {
-        localStorage.removeItem(DEMO_TOKEN_KEY);
-        setUser(null);
-      });
+    let cancelled = false;
+    (async () => {
+      const token = localStorage.getItem(DEMO_TOKEN_KEY);
+      if (!token) {
+        if (!cancelled) setUser(null);
+        return;
+      }
+      try {
+        const me = await api.me();
+        if (!cancelled) setUser(me);
+      } catch {
+        if (!cancelled) {
+          localStorage.removeItem(DEMO_TOKEN_KEY);
+          setUser(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [tick]);
 
   async function loginWithTelegramInitData(options = {}) {
@@ -46,7 +71,7 @@ export default function App() {
     }
     const res = await api.loginTelegram(initData);
     localStorage.setItem(DEMO_TOKEN_KEY, res.access_token);
-    if (!deferRefresh) refresh();
+    if (!deferRefresh) await refreshUser();
   }
 
   function waitMinVerify(flowStarted) {
@@ -71,7 +96,7 @@ export default function App() {
       if (r.ok) {
         const res = JSON.parse(text);
         localStorage.setItem(DEMO_TOKEN_KEY, res.access_token);
-        if (!deferRefresh) refresh();
+        if (!deferRefresh) await refreshUser();
         return;
       }
       let detail = text;
@@ -96,7 +121,7 @@ export default function App() {
       await loginWithTelegramInitData({ deferRefresh: true });
       await api.redeemCode(licenseCode);
       await waitMinVerify(flowStarted);
-      refresh();
+      await refreshUser();
       return { ok: true };
     } catch (e) {
       if (String(e.message || e).includes("initData")) {
@@ -104,7 +129,7 @@ export default function App() {
           await devDemoLogin({ deferRefresh: true });
           await api.redeemCode(licenseCode);
           await waitMinVerify(flowStarted);
-          refresh();
+          await refreshUser();
           return { ok: true };
         } catch (devErr) {
           return { ok: false, error: String(devErr.message || devErr) };
@@ -126,6 +151,11 @@ export default function App() {
     }
   }
 
+  async function handlePaymentComplete() {
+    setPurchaseOpen(false);
+    await refreshUser();
+  }
+
   if (!user || !user.has_access) {
     return (
       <>
@@ -139,10 +169,7 @@ export default function App() {
           currentTier={user?.subscription_tier || "start"}
           onRedeemCode={redeemLicenseCode}
           onEnsureAuth={ensureAuthForPayment}
-          onPaymentComplete={() => {
-            setPurchaseOpen(false);
-            refresh();
-          }}
+          onPaymentComplete={handlePaymentComplete}
         />
       </>
     );

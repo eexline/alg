@@ -382,10 +382,10 @@ export default function SubscriptionUpgradeFlow({
     try {
       await api.paymentOpenRobot();
     } catch {
-      /* still open dashboard if notify fails */
+      /* still open dashboard if sync fails */
     }
     onClose?.();
-    onPaymentComplete?.();
+    await onPaymentComplete?.();
   }
 
   function finishFailed(message) {
