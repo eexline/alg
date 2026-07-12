@@ -1,5 +1,35 @@
 import { useCallback, useEffect, useState } from "react";
 
+const BERLIN_TZ = "Europe/Berlin";
+
+function getBerlinClock(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BERLIN_TZ,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+  return {
+    weekday: map.weekday,
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+  };
+}
+
+/** No live stat updates: Fri 22:00 → Mon 00:50 (Europe/Berlin). */
+export function isStatsFrozenBerlin(now = new Date()) {
+  const { weekday, hour, minute } = getBerlinClock(now);
+  const mins = hour * 60 + minute;
+
+  if (weekday === "Sat" || weekday === "Sun") return true;
+  if (weekday === "Fri" && mins >= 22 * 60) return true;
+  if (weekday === "Mon" && mins < 50) return true;
+  return false;
+}
+
 function rndF(min, max) {
   return min + Math.random() * (max - min);
 }
@@ -40,8 +70,10 @@ function seedLeaderboard() {
 export function useLeaderboard(enabled = true) {
   const [rows, setRows] = useState([]);
   const [flash, setFlash] = useState(false);
+  const [frozen, setFrozen] = useState(() => isStatsFrozenBerlin());
 
   const tick = useCallback(() => {
+    if (isStatsFrozenBerlin()) return;
     setRows((prev) => {
       let next = prev.map((t) => ({
         ...t,
@@ -66,6 +98,14 @@ export function useLeaderboard(enabled = true) {
   }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return undefined;
+    const syncFrozen = () => setFrozen(isStatsFrozenBerlin());
+    syncFrozen();
+    const id = window.setInterval(syncFrozen, 30_000);
+    return () => window.clearInterval(id);
+  }, [enabled]);
+
+  useEffect(() => {
     if (!enabled || !rows.length) return undefined;
     const id = window.setInterval(tick, 6000);
     return () => window.clearInterval(id);
@@ -77,5 +117,5 @@ export function useLeaderboard(enabled = true) {
     return () => window.clearTimeout(t);
   }, [flash]);
 
-  return { rows, flash };
+  return { rows, flash, frozen };
 }

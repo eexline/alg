@@ -32,10 +32,7 @@
     var(--tg-content-safe-area-inset-top, 0px),
     env(safe-area-inset-top, 0px)
   );
-  --dash-inset-bottom: var(
-    --tg-safe-area-inset-bottom,
-    env(safe-area-inset-bottom, 0px)
-  );
+  --dash-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 html.tg-fullscreen .dashShell {
@@ -126,12 +123,12 @@ html.tg-fullscreen .dashShell {
   align-items: center;
   justify-content: center;
   gap: clamp(84px, 34vw, 200px);
-  min-height: 0;
+  min-height: 0 !important;
   max-width: 460px;
   box-sizing: border-box;
-  padding: 6px 20px calc(6px + var(--dash-inset-bottom));
-  padding-left: calc(16px + max(env(safe-area-inset-left), 0px));
-  padding-right: calc(20px + max(env(safe-area-inset-right), 0px));
+  padding: 8px 20px calc(8px + var(--dash-inset-bottom)) !important;
+  padding-left: calc(16px + max(env(safe-area-inset-left), 0px)) !important;
+  padding-right: calc(20px + max(env(safe-area-inset-right), 0px)) !important;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -140,13 +137,13 @@ html.tg-fullscreen .dashShell {
 .dashShell .dashTabBtn {
   flex: 0 0 auto;
   min-width: 56px;
-  min-height: 44px;
+  min-height: 0;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 4px 12px;
+  padding: 5px 12px;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -190,6 +187,22 @@ html.tg-fullscreen .dashShell {
   font-weight: 600;
   letter-spacing: 0.03em;
   transition: color 0.25s ease;
+}
+
+@media (max-width: 767px) {
+  .dashShell .dashFooterFixed {
+    padding: 0 !important;
+  }
+
+  .dashShell .dashFooter {
+    padding-top: 4px !important;
+    padding-bottom: calc(4px + var(--dash-inset-bottom)) !important;
+  }
+
+  .dashShell .dashTabBtn {
+    min-height: 0;
+    padding: 4px 10px;
+  }
 }
 
 .dashShell .dashTabBtn.isActive .dashTabLabel {

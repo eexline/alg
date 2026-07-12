@@ -3135,6 +3135,10 @@ button.licenseBtn.licenseBtnGold,
   background: transparent;
 }
 
+.dashShell > .dashFooter {
+  min-height: 0;
+}
+
 .dashFooterFixed {
   position: fixed;
   bottom: 0;
@@ -3159,6 +3163,13 @@ button.licenseBtn.licenseBtnGold,
     transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
     opacity 0.28s ease 0.04s,
     visibility 0s linear 0s;
+}
+
+/* Flex dashboard: footer inset lives on .dashFooter only (dashboard_ref.css) */
+.dashShell > .dashFooterFixed {
+  position: static;
+  padding: 0;
+  transform: none;
 }
 
 .dashTabBtn {

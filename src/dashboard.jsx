@@ -579,9 +579,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const profileMargin =
     accountSnapshot?.last_margin != null ? Number(accountSnapshot.last_margin) : null;
 
-  const { rows: leaderboardRows, flash: leaderboardFlash } = useLeaderboard(
-    activeTab === "dashboard",
-  );
+  const { rows: leaderboardRows, flash: leaderboardFlash, frozen: leaderboardFrozen } =
+    useLeaderboard(activeTab === "dashboard");
 
   return (
     <div className="dashRoot">
@@ -924,7 +923,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     {leaderboardRows.map((row, idx) => (
                       <div
                         key={`${row.user}-${idx}`}
-                        className={`refLbRow${leaderboardFlash ? " flash" : ""}`}
+                        className={`refLbRow${leaderboardFlash && !leaderboardFrozen ? " flash" : ""}`}
                       >
                         <span className="refLbRank">{idx + 1}</span>
                         <span className="refLbUser">{row.user}</span>
@@ -932,7 +931,11 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                       </div>
                     ))}
                   </div>
-                  <div className="refLbFoot">Updated live · resets daily</div>
+                  <div className="refLbFoot">
+                    {leaderboardFrozen
+                      ? "Market closed · updates resume Mon 00:50 (Berlin)"
+                      : "Updated live · resets daily"}
+                  </div>
                 </div>
               </div>
             )}
