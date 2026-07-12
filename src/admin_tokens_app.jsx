@@ -36,6 +36,33 @@ function RowStatusPill({ item }) {
   );
 }
 
+async function copyText(text) {
+  const value = String(text || "").trim();
+  if (!value) return false;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    /* fallback below */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = value;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export default function AdminTokensApp() {
   const [authLoading, setAuthLoading] = useState(true);
   const [authErr, setAuthErr] = useState("");
@@ -52,6 +79,7 @@ export default function AdminTokensApp() {
   const [pendingDeleteCode, setPendingDeleteCode] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [lastCreated, setLastCreated] = useState(null);
+  const [copiedCode, setCopiedCode] = useState("");
 
   useEffect(() => {
     prepareTelegramWebAppViewport();
@@ -191,6 +219,17 @@ export default function AdminTokensApp() {
     setPendingDeleteCode(codeText);
   }
 
+  async function handleCopyCode(code) {
+    const codeText = String(code || "").trim();
+    if (!codeText) return;
+    const ok = await copyText(codeText);
+    if (!ok) return;
+    setCopiedCode(codeText);
+    window.setTimeout(() => {
+      setCopiedCode((prev) => (prev === codeText ? "" : prev));
+    }, 2000);
+  }
+
   function cancelDelete() {
     if (deletingCode) return;
     setPendingDeleteCode("");
@@ -282,7 +321,16 @@ export default function AdminTokensApp() {
         {lastCreated ? (
           <div className="adminTokensCreated">
             <p className="adminTokensCreatedLabel">Код создан — отправьте пользователю</p>
-            <p className="adminTokensCreatedCode">{lastCreated.code}</p>
+            <div className="adminTokensCodeLine">
+              <p className="adminTokensCreatedCode">{lastCreated.code}</p>
+              <button
+                type="button"
+                className={`adminTokensCopyBtn${copiedCode === lastCreated.code ? " isOk" : ""}`}
+                onClick={() => handleCopyCode(lastCreated.code)}
+              >
+                {copiedCode === lastCreated.code ? "Скопировано" : "Копировать"}
+              </button>
+            </div>
             <div className="adminTokensCreatedDetails">
               <p className="adminTokensCreatedLine">
                 <span className="adminTokensCreatedKey">Тариф</span>
@@ -366,7 +414,16 @@ export default function AdminTokensApp() {
               return (
                 <li key={row.code} className="adminTokensRow">
                   <div className="adminTokensRowHead">
-                    <span className="adminTokensRowCode">{row.code}</span>
+                    <div className="adminTokensCodeLine">
+                      <span className="adminTokensRowCode">{row.code}</span>
+                      <button
+                        type="button"
+                        className={`adminTokensCopyBtn${copiedCode === row.code ? " isOk" : ""}`}
+                        onClick={() => handleCopyCode(row.code)}
+                      >
+                        {copiedCode === row.code ? "OK" : "Копировать"}
+                      </button>
+                    </div>
                     <RowStatusPill item={row} />
                   </div>
                   <p className="adminTokensRowSummary">
