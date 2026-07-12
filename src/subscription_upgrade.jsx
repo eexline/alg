@@ -825,7 +825,7 @@ export default function SubscriptionUpgradeFlow({
               </div>
             </div>
 
-            <div className="subUpgPayBlock gold subUpgAnim">
+            <div className={`subUpgPayBlock gold subUpgAnim${copyAmountOk ? " copied" : ""}`}>
               <div className="subUpgPayTop">
                 <span className="subUpgPayLbl">Amount to pay</span>
                 <span className="subUpgPayNet">USDT · {checkout.network}</span>
@@ -847,7 +847,7 @@ export default function SubscriptionUpgradeFlow({
               </button>
             </div>
 
-            <div className="subUpgPayBlock subUpgAnim">
+            <div className={`subUpgPayBlock subUpgAnim${copyAddrOk ? " copied" : ""}`}>
               <div className="subUpgPayLbl">Wallet address</div>
               <div className="subUpgPayValue">{checkout.wallet}</div>
               <button

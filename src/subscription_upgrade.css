@@ -837,11 +837,19 @@
   border-radius: 14px;
   padding: 13px 15px;
   margin-bottom: 11px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .subUpgPayBlock.gold {
   background: linear-gradient(150deg, #191510, #101015);
   border-color: rgba(217, 182, 90, 0.26);
+}
+
+.subUpgPayBlock.copied,
+.subUpgPayBlock.gold.copied {
+  border-color: #e3c168;
+  background: rgba(227, 193, 104, 0.11);
+  box-shadow: 0 6px 22px -10px rgba(227, 193, 104, 0.45);
 }
 
 .subUpgPayLbl {
