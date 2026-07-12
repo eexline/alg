@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
-import { getTelegramUser } from "./telegram_init.js";
 import SubscriptionUpgradeFlow, {
   ProfileSubscriptionCard,
 } from "./subscription_upgrade.jsx";
+import { fmtLeaderboardUsd, useLeaderboard } from "./leaderboard.js";
+import "./dashboard_ref.css";
 
 const emptyForm = {
   broker_name: "",
@@ -102,93 +103,17 @@ function getWeekendMarketStatusBerlin(now = new Date()) {
   return { closed: true, nextOpenUtcMs };
 }
 
-function ProfileFallbackIcon({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="8.5" r="3.2" fill="currentColor" />
-      <path
-        d="M12 13.2c-3.15 0-5.56 1.86-6.02 4.63-.08.5.31.97.82.97h10.4c.51 0 .9-.47.82-.97-.46-2.77-2.87-4.63-6.02-4.63Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function ProfilePencilIcon({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function ConnectServerIcon({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="4" rx="1.5" />
-      <rect x="3" y="10" width="18" height="4" rx="1.5" />
-      <rect x="3" y="16" width="18" height="4" rx="1.5" />
-    </svg>
-  );
-}
-
-function ConnectUserIcon({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function ConnectLockIcon({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
-function ConnectLinkedCheckIcon({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.35"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M 7.1 12.45 L 10.9 16.25 L 17.75 7.35" />
-    </svg>
-  );
-}
-
 function ConnectEyeIcon({ open, className = "" }) {
   if (open) {
     return (
-      <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
     );
   }
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
       <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
@@ -197,8 +122,9 @@ function ConnectEyeIcon({ open, className = "" }) {
 
 function HomeTabIcon({ className = "" }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-      <path d="M12 3L4 10v10h5v-6h6v6h5V10l-8-7z" />
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22V12h6v10" />
     </svg>
   );
 }
@@ -211,14 +137,28 @@ function ProfileTabIcon({ className = "" }) {
       aria-hidden="true"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeWidth="1.8"
     >
-      <path d="M20 21a8 8 0 0 0-16 0" />
-      <circle cx="12" cy="8" r="5" />
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   );
+}
+
+function RowChevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function fmtRefNum(n, digits = 0) {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 export default function Dashboard({ user, refreshKey, onRefresh }) {
@@ -244,24 +184,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   }, [user?.subscription_tier, user?.subscription_tier_label]);
 
   // server selection modal removed (connect broker only)
-  const avatarInputRef = useRef(null);
-  const [avatarOverrideDataUrl, setAvatarOverrideDataUrl] = useState(() => {
-    try {
-      return localStorage.getItem("profile_avatar_override_dataurl") || "";
-    } catch {
-      return "";
-    }
-  });
-  const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [usernameOverride, setUsernameOverride] = useState(() => {
-    try {
-      return localStorage.getItem("profile_username_override") || "";
-    } catch {
-      return "";
-    }
-  });
-  const [usernameDraft, setUsernameDraft] = useState("");
   const [brokerExpanded, setBrokerExpanded] = useState(true);
   const [connectSubmitting, setConnectSubmitting] = useState(false);
   const [startSubmitting, setStartSubmitting] = useState(false);
@@ -279,7 +202,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const dashShellRef = useRef(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [formControlFocused, setFormControlFocused] = useState(false);
-  const tgUser = getTelegramUser();
   const hideTabBar = keyboardOpen || formControlFocused;
 
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -580,10 +502,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     (s) => s.state === "running" || s.state === "queued"
   );
 
-  const runningCount = sessions.filter(
-    (s) => s.state === "running" || s.state === "queued"
-  ).length;
-
   const accessExpiryMs = user.access_expires_at
     ? new Date(user.access_expires_at).getTime()
     : null;
@@ -592,79 +510,6 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const hasActiveAccess =
     Boolean(user.has_access) &&
     (accessMsLeft == null ? true : accessMsLeft > 0);
-  const accessLeftLabel = (() => {
-    if (accessMsLeft == null) return null;
-    if (accessMsLeft <= 0) return "expired";
-    const totalMin = Math.floor(accessMsLeft / 60000);
-    const days = Math.floor(totalMin / 1440);
-    const hours = Math.floor((totalMin % 1440) / 60);
-    const mins = totalMin % 60;
-    if (days > 0) return `${days}d ${hours}h left`;
-    if (hours > 0) return `${hours}h ${mins}m left`;
-    return `${Math.max(1, mins)}m left`;
-  })();
-
-  const fullName = [tgUser?.first_name, tgUser?.last_name]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  const telegramUsername = tgUser?.username ? `@${tgUser.username}` : "";
-  const profileName = usernameOverride
-    ? usernameOverride
-    : fullName || telegramUsername || "User";
-
-  const telegramAvatar = tgUser?.photo_url || "";
-  const profileAvatar = avatarOverrideDataUrl || telegramAvatar;
-
-  function onProfileAvatarFileChange(e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
-      if (!dataUrl) return;
-      setAvatarOverrideDataUrl(dataUrl);
-      try {
-        localStorage.setItem("profile_avatar_override_dataurl", dataUrl);
-      } catch {
-        // ignore storage errors
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function openProfileEdit() {
-    const base = usernameOverride || telegramUsername || "";
-    setUsernameDraft(base);
-    setProfileEditOpen(true);
-  }
-
-  function closeProfileEdit() {
-    setProfileEditOpen(false);
-  }
-
-  function applyProfileEdit() {
-    const raw = String(usernameDraft || "").trim();
-    const cleaned = raw.startsWith("@") ? raw.slice(1) : raw;
-    if (!cleaned) {
-      setUsernameOverride("");
-      try {
-        localStorage.removeItem("profile_username_override");
-      } catch {
-        // ignore
-      }
-      setProfileEditOpen(false);
-      return;
-    }
-    const normalized = `@${cleaned}`;
-    setUsernameOverride(normalized);
-    try {
-      localStorage.setItem("profile_username_override", normalized);
-    } catch {
-      // ignore
-    }
-    setProfileEditOpen(false);
-  }
 
   function cancelBrokerEdit() {
     if (!accounts.length) return;
@@ -674,16 +519,10 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
     setForm(emptyForm);
   }
 
-  const selectedBrokerName =
-    accounts.find((a) => String(a.id) === String(tradingAccountId))?.broker_name || "Demo";
   const selectedServerName =
     accounts.find((a) => String(a.id) === String(tradingAccountId))?.server || "Demo";
   const primaryAccount =
     accounts.find((a) => String(a.id) === String(tradingAccountId)) || accounts[0];
-  const connectSummary =
-    primaryAccount != null
-      ? `${primaryAccount.broker_name} · ${primaryAccount.login}`
-      : "";
   const activeSessionForAccount = sessions.find(
     (s) =>
       String(s.account_id) === String(tradingAccountId) &&
@@ -740,6 +579,10 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
   const profileMargin =
     accountSnapshot?.last_margin != null ? Number(accountSnapshot.last_margin) : null;
 
+  const { rows: leaderboardRows, flash: leaderboardFlash } = useLeaderboard(
+    activeTab === "dashboard",
+  );
+
   return (
     <div className="dashRoot">
       <div
@@ -747,22 +590,8 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
         className={`dashShell${hideTabBar ? " dashKeyboardOpen" : ""}`}
       >
         <header className="dashHeaderFixed">
-          <div className="dashHeader">
-            <div className="dashHeaderBrand">
-              <img src="/logo.png" alt="Logo" className="dashHeaderLogo" />
-              <span className="dashHeaderBrandText">
-                PHASE TRADE BOT
-                {tierLabel ? (
-                  <>
-                    <span className="dashHeaderBrandSep" aria-hidden="true">
-                      {" "}
-                      |{" "}
-                    </span>
-                    <span className="dashHeaderBrandTier">{tierLabel}</span>
-                  </>
-                ) : null}
-              </span>
-            </div>
+          <div className="refHdr">
+            <img src="/logo.png" alt="" className="refHdrLogo" />
           </div>
         </header>
 
@@ -790,99 +619,7 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
 
             {activeTab === "profile" && (
               <div key="profile" className="dashTabPane">
-                <div className="profilePage">
-                  <div className="profileHeroBlock">
-                    <div className="profileAvatarWrap">
-                      {profileAvatar ? (
-                        <img src={profileAvatar} alt="" className="profileAvatarRef" />
-                      ) : (
-                        <div className="profileAvatarRef profileAvatarRefFallback">
-                          <ProfileFallbackIcon className="profileRefFallbackSvg" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="profileAvatarEdit"
-                        aria-label="Edit photo"
-                        onClick={() => avatarInputRef.current?.click()}
-                      >
-                        <ProfilePencilIcon className="profileAvatarEditSvg" />
-                      </button>
-                      <input
-                        ref={avatarInputRef}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={onProfileAvatarFileChange}
-                      />
-                    </div>
-                    <div className="profileDisplayName">{profileName}</div>
-                    <button
-                      type="button"
-                      className="profileEditOutline"
-                      onClick={openProfileEdit}
-                    >
-                      Edit Profile
-                    </button>
-                  </div>
-
-                  {profileEditOpen && (
-                    <div
-                      className="dashModalOverlay"
-                      role="dialog"
-                      aria-modal="true"
-                      onClick={closeProfileEdit}
-                    >
-                      <div
-                        className="dashModalCard"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="dashModalHead">
-                          <div className="dashModalTitle">
-                            Edit username
-                          </div>
-                          <button
-                            type="button"
-                            className="dashModalClose"
-                            onClick={closeProfileEdit}
-                            aria-label="Close"
-                          >
-                            ×
-                          </button>
-                        </div>
-
-                        <div className="dashModalBody">
-                          <div className="dashConnectInputShell">
-                            <input
-                              className="dashConnectInput"
-                              placeholder="Username"
-                              value={usernameDraft}
-                              onChange={(e) => setUsernameDraft(e.target.value)}
-                              autoComplete="off"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="dashModalActions">
-                          <button
-                            type="button"
-                            className="dashModalBtn dashModalBtnSecondary"
-                            onClick={closeProfileEdit}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            className="dashModalBtn dashModalBtnPrimary"
-                            onClick={applyProfileEdit}
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
+                <div className="refProfilePad">
                   <ProfileSubscriptionCard
                     currentTier={user?.subscription_tier}
                     tierLabel={tierLabel || strategyLabel}
@@ -891,403 +628,333 @@ export default function Dashboard({ user, refreshKey, onRefresh }) {
                     onUpgrade={() => setUpgradeOpen(true)}
                   />
 
-                  <SubscriptionUpgradeFlow
-                    open={upgradeOpen}
-                    onClose={() => setUpgradeOpen(false)}
-                    currentTier={user?.subscription_tier}
-                    onRedeemCode={async (code) => {
-                      try {
-                        await api.redeemCode(code);
-                        onRefresh?.();
-                        return { ok: true };
-                      } catch (e) {
-                        return { ok: false, error: String(e.message || e) };
-                      }
-                    }}
-                    onEnsureAuth={async () => {}}
-                    onPaymentComplete={() => onRefresh?.()}
-                  />
-
-                  <div className="profileRefCard">
-                    <div className="profileRefCardHead">
-                      <span className="profileRefCardTitle">Balance</span>
-                    </div>
-                    <div className="profileRefRows">
-                      <div className="profileRefRow">
-                        <span className="profileRefLabel">Balance</span>
-                        <span className="profileRefValue">
-                          {profileBalance == null
-                            ? "—"
-                            : `${profileBalance.toFixed(2)} USDT`}
-                        </span>
+                  <div className="sec-lbl dashAnim">Balance</div>
+                  <div className="refCard dashAnim">
+                    <div className="refBalGrid">
+                      <div className="refBalC">
+                        <div className="refBalL">Balance</div>
+                        <div className="refBalV">{fmtRefNum(profileBalance, 0)}</div>
+                        <div className="refBalU">USDT</div>
                       </div>
-                      <div className="profileRefRow">
-                        <span className="profileRefLabel">Equity</span>
-                        <span className="profileRefValue">
-                          {profileEquity == null
-                            ? "—"
-                            : `${profileEquity.toFixed(2)} USDT`}
-                        </span>
+                      <div className="refBalC">
+                        <div className="refBalL">Equity</div>
+                        <div className="refBalV">{fmtRefNum(profileEquity, 0)}</div>
+                        <div className="refBalU">USDT</div>
                       </div>
-                      <div className="profileRefRow">
-                        <span className="profileRefLabel">Margin</span>
-                        <span className="profileRefValue">
-                          {profileMargin == null ? "—" : profileMargin.toFixed(2)}
-                        </span>
+                      <div className="refBalC">
+                        <div className="refBalL">Margin</div>
+                        <div className="refBalV">{fmtRefNum(profileMargin, 0)}</div>
+                        <div className="refBalU">USDT</div>
                       </div>
-                      <div className="profileRefRow profileRefRowLast">
-                        <span className="profileRefLabel">Profit (session)</span>
-                        <span
-                          className={
-                            (sessionPnl ?? 0) > 0
-                              ? "profileRefValue profileRefValuePos"
-                              : (sessionPnl ?? 0) < 0
-                                ? "profileRefValue profileRefValueNeg"
-                                : "profileRefValue profileRefValuePos"
-                          }
+                      <div className="refBalC">
+                        <div className="refBalL">P/L session</div>
+                        <div
+                          className={`refBalV${
+                            sessionPnl == null
+                              ? ""
+                              : sessionPnl < 0
+                                ? " neg"
+                                : sessionPnl > 0
+                                  ? " pos"
+                                  : ""
+                          }`}
                         >
-                          {sessionPnl == null ? "—" : `${sessionPnl > 0 ? "+" : ""}${sessionPnl.toFixed(2)}`}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="profileRefCard">
-                    <div className="profileRefCardHead">
-                      <span className="profileRefCardTitle">Positions</span>
-                    </div>
-                    <div className="profilePosTable">
-                      <div className="profilePosColHead">
-                        <span>SYM</span>
-                        <span>TYPE</span>
-                        <span>VOL</span>
-                        <span>P/L</span>
-                      </div>
-                      {livePositions.length ? (
-                        <div className="profilePosBody">
-                          {livePositions.map((p) => {
-                            const pnl = p?.profit != null ? Number(p.profit) : null;
-                            const side = String(p?.type || "").toUpperCase();
-                            const sym = String(p?.symbol || "—");
-                            const vol = p?.volume != null ? Number(p.volume) : null;
-                            const key = String(p?.ticket || `${sym}-${side}-${vol ?? "x"}`);
-                            return (
-                              <div key={key} className="profilePosRow">
-                                <span>{sym}</span>
-                                <span>{side || "—"}</span>
-                                <span>{vol == null ? "—" : vol.toFixed(2)}</span>
-                                <span
-                                  className={
-                                    pnl == null || pnl === 0
-                                      ? "profileRefValue"
-                                      : pnl > 0
-                                        ? "profileRefValue profileRefValuePos"
-                                        : "profileRefValue profileRefValueNeg"
-                                  }
-                                >
-                                  {pnl == null ? "—" : `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`}
-                                </span>
-                              </div>
-                            );
-                          })}
+                          {sessionPnl == null
+                            ? "—"
+                            : `${sessionPnl > 0 ? "+" : sessionPnl < 0 ? "−" : ""}${fmtRefNum(Math.abs(sessionPnl), 0)}`}
                         </div>
-                      ) : (
-                        <p className="profilePosEmpty">No open positions</p>
-                      )}
+                        <div className="refBalU">USDT</div>
+                      </div>
                     </div>
                   </div>
 
-                  <p className="profileFootNote">
-                    Access {hasActiveAccess ? "active" : "inactive"}
-                    {accessLeftLabel ? ` · ${accessLeftLabel}` : ""}
-                  </p>
+                  <div className="sec-lbl dashAnim">Positions</div>
+                  <div className="refCard dashAnim">
+                    <div className="refPosHead">
+                      <span>Symbol</span>
+                      <span>Type</span>
+                      <span>Vol</span>
+                      <span>P/L</span>
+                    </div>
+                    {livePositions.length ? (
+                      livePositions.map((p) => {
+                        const pnl = p?.profit != null ? Number(p.profit) : null;
+                        const side = String(p?.type || "").toUpperCase();
+                        const sym = String(p?.symbol || "—");
+                        const vol = p?.volume != null ? Number(p.volume) : null;
+                        const key = String(p?.ticket || `${sym}-${side}-${vol ?? "x"}`);
+                        return (
+                          <div key={key} className="refPosRow">
+                            <span>{sym}</span>
+                            <span>{side || "—"}</span>
+                            <span>{vol == null ? "—" : vol.toFixed(2)}</span>
+                            <span
+                              className={
+                                pnl == null || pnl === 0
+                                  ? ""
+                                  : pnl > 0
+                                    ? "refBalV pos"
+                                    : "refBalV neg"
+                              }
+                            >
+                              {pnl == null ? "—" : `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="refPosEmpty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                          <path d="M3 3v18h18" />
+                          <path d="M7 14l4-4 3 3 5-6" />
+                        </svg>
+                        <div>No open positions</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
             {activeTab === "dashboard" && (
               <div key="dashboard" className="dashTabPane">
-                <section className="dashConnectSection">
-                  <div className="dashCard dashCardConnect dashCardConnectRef">
-                    {accounts.length > 0 && !brokerExpanded && (
-                      <div className="dashConnectLinked">
-                        <span className="dashConnectLinkedMark" aria-hidden="true">
-                          <ConnectLinkedCheckIcon className="dashConnectLinkedCheckSvg" />
-                        </span>
-                        <div className="dashConnectLinkedBody">
-                          <p className="dashConnectLinkedAccount">{connectSummary}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="dashConnectLinkedAction"
-                          onClick={() => {
-                            setBrokerExpanded(true);
-                            setMsg("");
-                            setConnectErr("");
-                          }}
-                        >
-                          Change
-                        </button>
-                      </div>
-                    )}
-                    {(accounts.length === 0 || brokerExpanded) && (
-                      <>
-                        <div
-                          className={`dashCardTitleRow dashConnectInnerTitle${
-                            accounts.length > 0 ? " dashConnectTitleRowWithAction" : ""
-                          }`}
-                        >
-                          <h2>Connect Broker</h2>
-                          {accounts.length > 0 ? (
-                            <button
-                              type="button"
-                              className="dashConnectEditCancel"
-                              onClick={cancelBrokerEdit}
-                            >
-                              Back
-                            </button>
-                          ) : null}
-                        </div>
-                        <form
-                          className={`dashConnectFormStack${connectSubmitting ? " dashConnectFormConnecting" : ""}`}
-                          onSubmit={submitBroker}
-                        >
-                          <div className={`dashConnectFieldGroup${fieldErrors.server ? " isInvalid" : ""}`}>
-                            <div className="dashConnectInputShell dashConnectInputShellIcon">
-                              <span className="dashConnectInputLeadIcon" aria-hidden>
-                                <ConnectServerIcon className="dashConnectInputSvg" />
-                              </span>
-                              <input
-                                className="dashConnectInput dashConnectInputPadded"
-                                value={form.server}
-                                placeholder="Enter server"
-                                autoComplete="off"
-                                aria-label="Server"
-                                disabled={connectSubmitting}
-                                onChange={(e) => {
-                                  setConnectErr("");
-                                  setFieldErrors((fe) => ({ ...fe, server: false }));
-                                  setForm({ ...form, server: e.target.value });
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div className={`dashConnectFieldGroup${fieldErrors.login ? " isInvalid" : ""}`}>
-                            <div className="dashConnectInputShell dashConnectInputShellIcon">
-                              <span className="dashConnectInputLeadIcon" aria-hidden>
-                                <ConnectUserIcon className="dashConnectInputSvg" />
-                              </span>
-                              <input
-                                className="dashConnectInput dashConnectInputPadded"
-                                value={form.login}
-                                placeholder="Enter login"
-                                autoComplete="username"
-                                aria-label="Login"
-                                disabled={connectSubmitting}
-                                onChange={(e) => {
-                                  setConnectErr("");
-                                  setFieldErrors((fe) => ({ ...fe, login: false }));
-                                  setForm({ ...form, login: e.target.value });
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div className={`dashConnectFieldGroup${fieldErrors.password ? " isInvalid" : ""}`}>
-                            <div className="dashConnectInputShell dashConnectInputShellIcon dashConnectInputShellPw">
-                              <span className="dashConnectInputLeadIcon" aria-hidden>
-                                <ConnectLockIcon className="dashConnectInputSvg" />
-                              </span>
-                              <input
-                                className="dashConnectInput dashConnectInputPadded"
-                                type={showConnectPassword ? "text" : "password"}
-                                value={form.password}
-                                placeholder="Password"
-                                autoComplete="current-password"
-                                aria-label="Password"
-                                disabled={connectSubmitting}
-                                onChange={(e) => {
-                                  setConnectErr("");
-                                  setFieldErrors((fe) => ({ ...fe, password: false }));
-                                  setForm({ ...form, password: e.target.value });
-                                }}
-                              />
-                              <button
-                                type="button"
-                                className="dashConnectPwToggle"
-                                aria-label={showConnectPassword ? "Hide password" : "Show password"}
-                                disabled={connectSubmitting}
-                                onClick={() => setShowConnectPassword((v) => !v)}
-                              >
-                                <ConnectEyeIcon open={showConnectPassword} className="dashConnectInputSvg" />
-                              </button>
-                            </div>
-                          </div>
-                          {(fieldErrors.server || fieldErrors.login || fieldErrors.password) && (
-                            <div className="dashConnectValidationMsg">
-                              Server, login, and password are required.
-                            </div>
-                          )}
-                          {connectErr ? (
-                            <div
-                              className="dashConnectErrCard"
-                              role="alert"
-                              key={connectErrBump}
-                            >
-                              <span className="dashConnectErrGlyph" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                  <path
-                                    fill="currentColor"
-                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                  />
-                                </svg>
-                              </span>
-                              <div className="dashConnectErrBody">
-                                <span className="dashConnectErrLabel">Couldn&apos;t connect</span>
-                                <p className="dashConnectErrText">{connectErr}</p>
-                              </div>
-                            </div>
-                          ) : null}
-                          {connectSubmitting ? (
-                            <p className="dashConnectVerifyHint" aria-live="polite">
-                              <span className="dashConnectVerifyHintLead">Authorizing with broker</span>
-                              <span className="dashConnectVerifyEllipsis" aria-hidden="true">
-                                <span className="dashConnectVerifyEllipsisDot" />
-                                <span className="dashConnectVerifyEllipsisDot" />
-                                <span className="dashConnectVerifyEllipsisDot" />
-                              </span>
-                            </p>
-                          ) : null}
-                          <button
-                            className={`dashConnectSubmitBtn${connectSubmitting ? " dashConnectSubmitBtnLoading" : ""}`}
-                            type="submit"
-                            disabled={connectSubmitting}
-                          >
-                            {connectSubmitting ? (
-                              <>
-                                <span className="dashConnectSubmitSpinner" aria-hidden="true" />
-                                <span className="dashConnectSubmitLabel">Connecting</span>
-                                <span className="dashConnectSubmitEllipsis" aria-hidden="true">
-                                  <span className="dashConnectSubmitEllipsisDot" />
-                                  <span className="dashConnectSubmitEllipsisDot" />
-                                  <span className="dashConnectSubmitEllipsisDot" />
-                                </span>
-                              </>
-                            ) : (
-                              <span className="dashConnectSubmitLabel">Connect</span>
-                            )}
+                {accounts.length > 0 && !brokerExpanded ? (
+                  <div className="refConnected dashAnim">
+                    <div className="refConnIc">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <path d="M5 12l5 5L20 6" />
+                      </svg>
+                    </div>
+                    <div className="refConnInfo">
+                      <div className="refConnSrv">{primaryAccount?.server || selectedServerName}</div>
+                      <div className="refConnId">{primaryAccount?.login ?? "—"}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="refChange"
+                      onClick={() => {
+                        setBrokerExpanded(true);
+                        setMsg("");
+                        setConnectErr("");
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="sec-lbl dashAnim">Broker connection</div>
+                    <div className="refCard dashAnim">
+                      <div className="refCard-h">
+                        <span className="refCard-t">Connect account</span>
+                        {accounts.length > 0 ? (
+                          <button type="button" className="refChange" onClick={cancelBrokerEdit}>
+                            Back
                           </button>
-                        </form>
-                      </>
-                    )}
-                  </div>
-                </section>
+                        ) : null}
+                      </div>
+                      <form onSubmit={submitBroker}>
+                        <div className="refInputWrap">
+                          <svg className="refIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                            <path d="M7 9h10M7 13h7" />
+                          </svg>
+                          <input
+                            className={`refField${fieldErrors.server ? " isInvalid" : ""}`}
+                            value={form.server}
+                            placeholder="Server (e.g. MetaQuotes-Demo)"
+                            autoComplete="off"
+                            aria-label="Server"
+                            disabled={connectSubmitting}
+                            onChange={(e) => {
+                              setConnectErr("");
+                              setFieldErrors((fe) => ({ ...fe, server: false }));
+                              setForm({ ...form, server: e.target.value });
+                            }}
+                          />
+                        </div>
+                        <div className="refInputWrap">
+                          <svg className="refIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                          </svg>
+                          <input
+                            className={`refField${fieldErrors.login ? " isInvalid" : ""}`}
+                            value={form.login}
+                            placeholder="Login"
+                            autoComplete="username"
+                            aria-label="Login"
+                            disabled={connectSubmitting}
+                            onChange={(e) => {
+                              setConnectErr("");
+                              setFieldErrors((fe) => ({ ...fe, login: false }));
+                              setForm({ ...form, login: e.target.value });
+                            }}
+                          />
+                        </div>
+                        <div className="refInputWrap">
+                          <svg className="refIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <rect x="4" y="11" width="16" height="10" rx="2.5" />
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                          </svg>
+                          <input
+                            className={`refField refFieldPw${fieldErrors.password ? " isInvalid" : ""}`}
+                            type={showConnectPassword ? "text" : "password"}
+                            value={form.password}
+                            placeholder="Password"
+                            autoComplete="current-password"
+                            aria-label="Password"
+                            disabled={connectSubmitting}
+                            onChange={(e) => {
+                              setConnectErr("");
+                              setFieldErrors((fe) => ({ ...fe, password: false }));
+                              setForm({ ...form, password: e.target.value });
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="refIco refIcoEye"
+                            aria-label={showConnectPassword ? "Hide password" : "Show password"}
+                            disabled={connectSubmitting}
+                            onClick={() => setShowConnectPassword((v) => !v)}
+                          >
+                            <ConnectEyeIcon open={showConnectPassword} />
+                          </button>
+                        </div>
+                        {(fieldErrors.server || fieldErrors.login || fieldErrors.password) && (
+                          <div className="refConnectErr">Server, login, and password are required.</div>
+                        )}
+                        {connectErr ? (
+                          <div className="refConnectErr" role="alert" key={connectErrBump}>
+                            {connectErr}
+                          </div>
+                        ) : null}
+                        {connectSubmitting ? (
+                          <p className="refVerifyHint" aria-live="polite">
+                            Authorizing with broker…
+                          </p>
+                        ) : null}
+                        <button
+                          className="refBtn refBtnLight"
+                          type="submit"
+                          disabled={connectSubmitting}
+                        >
+                          {connectSubmitting ? "Connecting…" : "Connect"}
+                        </button>
+                      </form>
+                    </div>
+                  </>
+                )}
 
-                <div className="dashCard dashCardBot">
-                  <div className="dashCardHead dashCardHeadBot">
-                    <h2>Trading Bot</h2>
-                    <span className={runningCount > 0 ? "dashStatusGreen" : "dashStatusMuted"}>
-                      {runningCount > 0 ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <div className="dashField dashBotRow dashBotRowBroker">
-                    <div className="dashFieldBody">
-                      <label>Server</label>
-                      <span
-                        className="dashBotRowValue"
-                      >
+                {accounts.length > 0 && !brokerExpanded ? (
+                  <div className="refCard dashAnim">
+                    <div className="refCard-h">
+                      <span className="refCard-t">Trading bot</span>
+                      <div className={`badge-status${activeSessionForAccount ? " live" : ""}`}>
+                        <span className="dot" />
+                        <span>{activeSessionForAccount ? "Active" : "Inactive"}</span>
+                      </div>
+                    </div>
+                    <div className="refTr">
+                      <span className="refTr-k">Server</span>
+                      <span className="refTr-v">
                         {selectedServerName}
+                        <RowChevron />
                       </span>
                     </div>
-                    <span className="dashFieldChevron">›</span>
-                  </div>
-
-                  {/* server selection modal removed */}
-                  <div className="dashField dashBotRow">
-                    <div className="dashFieldBody">
-                      <label>Strategy</label>
-                      <span className="dashBotRowValue">{strategyLabel}</span>
+                    <div className="refTr">
+                      <span className="refTr-k">Strategy</span>
+                      <span className="refTr-v">
+                        {tierLabel || strategyLabel}
+                        <RowChevron />
+                      </span>
                     </div>
-                    <span className="dashFieldChevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </div>
-                  <div className="dashField dashBotRow">
-                    <div className="dashFieldBody">
-                      <label>Instrument</label>
-                      <span className="dashBotRowValue">{TRADING_INSTRUMENT_LABEL}</span>
+                    <div className="refTr">
+                      <span className="refTr-k">Instrument</span>
+                      <span className="refTr-v">
+                        {TRADING_INSTRUMENT_LABEL}
+                        <RowChevron />
+                      </span>
                     </div>
-                    <span className="dashFieldChevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </div>
-
-                  <button
-                    className={
-                      activeSessionForAccount
-                        ? `licenseBtn dashWideBtn dashStartBtn dashBotStopBtn${
-                            stopSubmitting ? " dashConnectSubmitBtnLoading" : ""
-                          }`
-                        : `licenseBtn dashWideBtn dashStartBtn dashBotStartBtn${
-                            startSubmitting ? " dashConnectSubmitBtnLoading" : ""
-                          }`
-                    }
-                    type="button"
-                    onClick={
-                      activeSessionForAccount
-                        ? () => stop(activeSessionForAccount.id)
-                        : start
-                    }
-                    disabled={
-                      brokerChangeMode
-                        ? !activeSessionForAccount
-                        : activeSessionForAccount
-                          ? postStartStopGuard || stopSubmitting
-                          : marketStatus.closed || startSubmitting || !accounts.length
-                    }
-                  >
-                    {activeSessionForAccount ? stopSubmitting ? (
-                      <>
-                        <span className="dashConnectSubmitSpinner" aria-hidden="true" />
-                        <span className="licenseBtnLabel">Stopping</span>
-                        <span className="dashConnectSubmitEllipsis" aria-hidden="true">
-                          <span className="dashConnectSubmitEllipsisDot" />
-                          <span className="dashConnectSubmitEllipsisDot" />
-                          <span className="dashConnectSubmitEllipsisDot" />
+                    <button
+                      className={`refBtn ${
+                        activeSessionForAccount ? "refBtnRed" : "refBtnGreen"
+                      }`}
+                      type="button"
+                      onClick={
+                        activeSessionForAccount
+                          ? () => stop(activeSessionForAccount.id)
+                          : start
+                      }
+                      disabled={
+                        brokerChangeMode
+                          ? !activeSessionForAccount
+                          : activeSessionForAccount
+                            ? postStartStopGuard || stopSubmitting
+                            : marketStatus.closed || startSubmitting || !accounts.length
+                      }
+                    >
+                      {activeSessionForAccount
+                        ? stopSubmitting
+                          ? "Stopping…"
+                          : "Stop"
+                        : startSubmitting
+                          ? "Starting…"
+                          : "Start"}
+                    </button>
+                    {!activeSessionForAccount && marketStatus.closed ? (
+                      <div className="refMarket" role="status" aria-live="polite">
+                        <span className="refMt">Market closed</span>
+                        <span className="refMtx">
+                          Weekend. Trading opens{" "}
+                          <b>{marketStatus.nextOpenText || "Monday 09:00"}</b> (Berlin).
                         </span>
-                      </>
-                    ) : (
-                      <span className="licenseBtnLabel">Stop</span>
-                    ) : startSubmitting ? (
-                      <>
-                        <span className="dashConnectSubmitSpinner" aria-hidden="true" />
-                        <span className="licenseBtnLabel">Connecting</span>
-                        <span className="dashConnectSubmitEllipsis" aria-hidden="true">
-                          <span className="dashConnectSubmitEllipsisDot" />
-                          <span className="dashConnectSubmitEllipsisDot" />
-                          <span className="dashConnectSubmitEllipsisDot" />
-                        </span>
-                      </>
-                    ) : (
-                      <span className="licenseBtnLabel">Start</span>
-                    )}
-                  </button>
-                  {!activeSessionForAccount && marketStatus.closed ? (
-                    <div className="dashMarketClosedCard" role="status" aria-live="polite">
-                      <div className="dashMarketClosedTitle">Market closed</div>
-                      <div className="dashMarketClosedText">
-                        Market closed (weekend). Trading will be available{" "}
-                        <span className="dashMarketClosedWhen">{marketStatus.nextOpenText || "Monday 09:00"}</span>{" "}
-                        (Berlin).
                       </div>
-                    </div>
-                  ) : null}
-                  {!accounts.length ? (
-                    <p className="dashStartHint">Connect a broker first</p>
-                  ) : null}
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="sec-lbl dashAnim">Top 5 traders of the day</div>
+                <div className="refCard refCardPadTight dashAnim">
+                  <div className="refLbHead">
+                    <span>#</span>
+                    <span>Trader</span>
+                    <span>Profit</span>
+                  </div>
+                  <div className="refLbBody">
+                    {leaderboardRows.map((row, idx) => (
+                      <div
+                        key={`${row.user}-${idx}`}
+                        className={`refLbRow${leaderboardFlash ? " flash" : ""}`}
+                      >
+                        <span className="refLbRank">{idx + 1}</span>
+                        <span className="refLbUser">{row.user}</span>
+                        <span className="refLbProfit">{fmtLeaderboardUsd(row.profit)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="refLbFoot">Updated live · resets daily</div>
                 </div>
               </div>
             )}
           </div>
         </main>
+
+        <SubscriptionUpgradeFlow
+          open={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          currentTier={user?.subscription_tier}
+          onRedeemCode={async (code) => {
+            try {
+              await api.redeemCode(code);
+              onRefresh?.();
+              return { ok: true };
+            } catch (e) {
+              return { ok: false, error: String(e.message || e) };
+            }
+          }}
+          onEnsureAuth={async () => {}}
+          onPaymentComplete={() => onRefresh?.()}
+        />
 
         <footer className="dashFooterFixed" aria-hidden={hideTabBar}>
           <div className="dashFooter">

@@ -1,5 +1,6 @@
 /* Subscription upgrade / checkout flow (from index mock) */
 .subUpgOverlay {
+  --scene-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   z-index: 120;
   top: 0;
@@ -15,11 +16,47 @@
     var(--safe-area-right)
     var(--safe-area-bottom)
     var(--safe-area-left);
-  background: #06080c;
+  background: transparent;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: subUpgFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(24px);
+  transition:
+    opacity 0.38s var(--scene-ease),
+    transform 0.38s var(--scene-ease),
+    visibility 0.38s;
+}
+
+.subUpgOverlay:not(.subUpgOverlayScene) {
+  z-index: 200;
+  background-color: var(--app-bg-color, #060708);
+  background-image: var(--app-bg-image);
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+}
+
+.subUpgOverlay.subUpgOverlayScene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  width: auto;
+  height: auto;
+  max-height: none;
+}
+
+.subUpgOverlay.isActive {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.subUpgOverlay.isExitLeft {
+  transform: translateX(-24px);
 }
 
 .tg-keyboard-open .subUpgOverlay {
@@ -36,15 +73,6 @@
   padding-bottom: 4px;
 }
 
-@keyframes subUpgFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .subUpgShell {
   flex: 1;
   display: flex;
@@ -54,7 +82,7 @@
   margin: 0 auto;
   overflow: hidden;
   color: #f4f4f6;
-  background: #06080c;
+  background: transparent;
   min-height: 0;
 }
 
@@ -128,21 +156,27 @@
   -webkit-text-fill-color: transparent;
 }
 
-.subUpgAnim {
-  animation: subUpgFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.subUpgOverlay.isActive .subUpgAnim {
+  animation: subUpgFadeUp 0.5s var(--scene-ease) backwards;
 }
 
-.subUpgAnim:nth-child(1) {
+.subUpgOverlay.isActive .subUpgAnim:nth-child(1) {
   animation-delay: 0.04s;
 }
-.subUpgAnim:nth-child(2) {
+.subUpgOverlay.isActive .subUpgAnim:nth-child(2) {
   animation-delay: 0.1s;
 }
-.subUpgAnim:nth-child(3) {
+.subUpgOverlay.isActive .subUpgAnim:nth-child(3) {
   animation-delay: 0.16s;
 }
-.subUpgAnim:nth-child(4) {
+.subUpgOverlay.isActive .subUpgAnim:nth-child(4) {
   animation-delay: 0.22s;
+}
+.subUpgOverlay.isActive .subUpgAnim:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.subUpgOverlay.isActive .subUpgAnim:nth-child(6) {
+  animation-delay: 0.34s;
 }
 
 @keyframes subUpgFadeUp {
@@ -245,6 +279,55 @@
   font-weight: 600;
 }
 
+.subUpgHdrPlans {
+  justify-content: space-between;
+}
+
+.subUpgHdrLogo {
+  display: flex;
+  align-items: center;
+  min-width: 26px;
+}
+
+.subUpgHdrLogoImg {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+
+.subUpgHdrLeft {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.subUpgHdrName {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: #f4f4f6;
+}
+
+.subUpgPlansHead {
+  margin: 8px 0 16px;
+}
+
+.subUpgPlansTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f4f4f6;
+}
+
+.subUpgPlansSub {
+  margin: 3px 0 0;
+  color: #9494a0;
+  font-size: 12.5px;
+}
+
 .profileSubUpgradeBtn {
   margin-top: 14px;
   width: 100%;
@@ -254,9 +337,9 @@
 .subUpgPlan {
   position: relative;
   background: linear-gradient(170deg, #191510, #101015);
-  border: 1.5px solid rgba(217, 182, 90, 0.26);
+  border: 1.5px solid rgba(227, 193, 104, 0.3);
   border-radius: 22px;
-  padding: 22px 18px 18px;
+  padding: 24px 20px 20px;
   margin-bottom: 14px;
   overflow: hidden;
 }
@@ -279,20 +362,20 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  background: linear-gradient(135deg, #f6dd93 0%, #e3c168 48%, #be9638 100%);
   color: #1a1305;
   font-weight: 700;
   font-size: 10px;
   letter-spacing: 0.09em;
   padding: 5px 12px;
   border-radius: 24px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-transform: uppercase;
 }
 
 .subUpgPlanName {
   font-weight: 800;
-  font-size: 20px;
+  font-size: 22px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -306,8 +389,9 @@
 
 .subUpgPlanPrice b {
   font-weight: 800;
-  font-size: 36px;
+  font-size: 42px;
   line-height: 1;
+  color: #ffffff;
 }
 
 .subUpgPlanPrice span {
@@ -318,28 +402,310 @@
 
 .subUpgPlanNote {
   font-size: 11.5px;
-  color: #62626e;
-  margin-bottom: 14px;
+  color: #66666f;
+  margin-bottom: 0;
+}
+
+.subUpgPlanFeats {
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
 }
 
 .subUpgFeat {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  margin-bottom: 9px;
+  font-size: 13.5px;
+  margin-bottom: 0;
+  color: #f4f4f6;
 }
 
 .subUpgFeatChk {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(217, 182, 90, 0.1);
+  background: rgba(227, 193, 104, 0.11);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #f0d285;
+  color: #f6dd93;
+}
+
+.subUpgFeatChk svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.subUpgPlanCta {
+  border-radius: 14px;
+  padding: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgPlanCtaArrow {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgPlanCta:active .subUpgPlanCtaArrow {
+  transform: translateX(3px);
+}
+
+.subUpgBtnPlanGhost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: #f4f4f6;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.subUpgBtnPlanGhost::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
+}
+
+.subUpgBtnPlanGhost:active {
+  transform: scale(0.98);
+}
+
+.subUpgSocial {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 14px;
+  background: #15151a;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.subUpgAvatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.subUpgAvatars span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0d0d10;
+  margin-left: -8px;
+  background: linear-gradient(135deg, #f6dd93 0%, #e3c168 48%, #be9638 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #1a1305;
+}
+
+.subUpgAvatars span:first-child {
+  margin-left: 0;
+}
+
+.subUpgSocialTxt {
+  font-size: 11.5px;
+  color: #9494a0;
+  line-height: 1.4;
+}
+
+.subUpgSocialTxt b {
+  color: #f4f4f6;
+  font-weight: 600;
+}
+
+.subUpgResultsWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 16px 18px;
+}
+
+.subUpgCarousel {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+
+.subUpgCarViewport {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 18px;
+  height: 100%;
+}
+
+.subUpgCarTrack {
+  display: flex;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.subUpgCarSlide {
+  min-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+
+.subUpgResultShot {
+  flex: 1;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(150deg, #191510, #101015);
+  border: 1px solid rgba(227, 193, 104, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subUpgResultImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.subUpgResultPh {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #66666f;
+  text-align: center;
+  padding: 20px;
+}
+
+.subUpgResultPh svg {
+  width: 34px;
+  height: 34px;
+  color: #be9638;
+  opacity: 0.7;
+}
+
+.subUpgResultPh span {
+  font-size: 11.5px;
+  line-height: 1.4;
+  max-width: 180px;
+}
+
+.subUpgResultPill {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(52, 199, 89, 0.13);
+  color: #34c759;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1px solid rgba(52, 199, 89, 0.25);
+  z-index: 1;
+}
+
+.subUpgCarArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(10, 10, 12, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f4f4f6;
+  transition: 0.2s;
+  cursor: pointer;
+  padding: 0;
+}
+
+.subUpgCarArrow:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.subUpgCarArrowLeft {
+  left: -2px;
+}
+
+.subUpgCarArrowRight {
+  right: -2px;
+}
+
+.subUpgCarArrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.subUpgCarFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.subUpgCarDots {
+  display: flex;
+  gap: 6px;
+}
+
+.subUpgCarDots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.13);
+  transition: 0.25s;
+  display: block;
+}
+
+.subUpgCarDots i.on {
+  background: #e3c168;
+  width: 18px;
+  border-radius: 4px;
+}
+
+.subUpgCarCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #66666f;
+  font-variant-numeric: tabular-nums;
 }
 
 .subUpgBtnGold {
@@ -349,14 +715,14 @@
   gap: 8px;
   width: 100%;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 600;
   font-size: 14px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #f0d285 0%, #d9b65a 50%, #b8923c 100%);
+  background: linear-gradient(135deg, #f6dd93 0%, #e3c168 48%, #be9638 100%);
   color: #1a1305;
-  box-shadow: 0 8px 24px -10px rgba(217, 182, 90, 0.5);
+  box-shadow: 0 8px 24px -10px rgba(227, 193, 104, 0.5);
   position: relative;
   overflow: hidden;
 }
@@ -367,16 +733,22 @@
   inset: 0;
   background: linear-gradient(
     110deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 65%
+    transparent 42%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 58%
   );
-  background-size: 220% 100%;
+  background-size: 180% 100%;
   animation: appBtnShimmer 3.5s infinite;
+  pointer-events: none;
 }
 
 .subUpgBtnGold:active {
   transform: scale(0.98);
+}
+
+.subUpgBtnGold > * {
+  position: relative;
+  z-index: 1;
 }
 
 .subUpgBtnGold:disabled {
@@ -644,7 +1016,7 @@
   text-align: center;
   padding: 12px 22px 16px;
   overflow-y: auto;
-  background: #06080c;
+  background: transparent;
 }
 
 .subUpgRing {
@@ -793,7 +1165,7 @@
   padding: 22px 18px 28px;
   position: relative;
   overflow-y: auto;
-  background: #06080c;
+  background: transparent;
 }
 
 .subUpgConfetti {
@@ -911,7 +1283,7 @@
   text-align: center;
   padding: 20px 22px 28px;
   overflow-y: auto;
-  background: #06080c;
+  background: transparent;
 }
 
 .subUpgFX {

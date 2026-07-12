@@ -8,11 +8,18 @@ import { api } from "./api.js";
 import LicenseAccess, { LICENSE_MIN_VERIFY_MS } from "./license_access.jsx";
 import Dashboard from "./dashboard.jsx";
 import SubscriptionUpgradeFlow from "./subscription_upgrade.jsx";
+import AppBootSplash from "./app_boot_splash.jsx";
 
 const DEMO_TOKEN_KEY = "access_token";
+const BOOT_MIN_MS = 1400;
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined);
+  const [bootDone, setBootDone] = useState(false);
   const [tick, setTick] = useState(0);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -43,6 +50,36 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const started = performance.now();
+      const token = localStorage.getItem(DEMO_TOKEN_KEY);
+      if (!token) {
+        if (!cancelled) setUser(null);
+      } else {
+        try {
+          const me = await api.me();
+          if (!cancelled) setUser(me);
+        } catch {
+          if (!cancelled) {
+            localStorage.removeItem(DEMO_TOKEN_KEY);
+            setUser(null);
+          }
+        }
+      }
+      const elapsed = performance.now() - started;
+      if (elapsed < BOOT_MIN_MS) {
+        await sleep(BOOT_MIN_MS - elapsed);
+      }
+      if (!cancelled) setBootDone(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!bootDone || tick === 0) return undefined;
+    let cancelled = false;
+    (async () => {
       const token = localStorage.getItem(DEMO_TOKEN_KEY);
       if (!token) {
         if (!cancelled) setUser(null);
@@ -61,7 +98,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [tick]);
+  }, [tick, bootDone]);
 
   async function loginWithTelegramInitData(options = {}) {
     const { deferRefresh = false } = options;
@@ -156,27 +193,36 @@ export default function App() {
     await refreshUser();
   }
 
+  if (!bootDone || user === undefined) {
+    return <AppBootSplash />;
+  }
+
   if (!user || !user.has_access) {
     return (
-      <>
-        <LicenseAccess
-          onBuyClick={() => setPurchaseOpen(true)}
-          onActivate={redeemLicenseCode}
-        />
+      <div className="appSceneShell">
+        <div
+          className={`licenseScene${purchaseOpen ? " isExitLeft" : " isActive"}`}
+        >
+          <LicenseAccess
+            onBuyClick={() => setPurchaseOpen(true)}
+            onActivate={redeemLicenseCode}
+          />
+        </div>
         <SubscriptionUpgradeFlow
           open={purchaseOpen}
+          presentation="scene"
           onClose={() => setPurchaseOpen(false)}
           currentTier={user?.subscription_tier || "start"}
           onRedeemCode={redeemLicenseCode}
           onEnsureAuth={ensureAuthForPayment}
           onPaymentComplete={handlePaymentComplete}
         />
-      </>
+      </div>
     );
   }
 
   return (
-    <div className="app">
+    <div className="app appWithEnter">
       <Dashboard user={user} refreshKey={tick} onRefresh={refresh} />
     </div>
   );

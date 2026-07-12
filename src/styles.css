@@ -26,6 +26,11 @@
     --tg-viewport-stable-height,
     var(--app-viewport-height)
   );
+  --app-bg-color: #060708;
+  --app-bg-image:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(210deg, #2a2d34 0%, #1b1e24 26%, #111319 54%, #07080a 100%),
+    linear-gradient(180deg, #0d0f12 0%, #060708 100%);
 }
 
 html {
@@ -39,11 +44,8 @@ body {
   min-height: var(--app-viewport-stable-height, 100dvh);
   height: var(--app-viewport-stable-height, 100dvh);
   overflow: hidden;
-  background-color: #060708;
-  background-image:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 46%),
-    linear-gradient(210deg, #2a2d34 0%, #1b1e24 26%, #111319 54%, #07080a 100%),
-    linear-gradient(180deg, #0d0f12 0%, #060708 100%);
+  background-color: var(--app-bg-color);
+  background-image: var(--app-bg-image);
   background-repeat: no-repeat;
   background-size: 100% 100%, 100% 100%, 100% 100%;
 }
@@ -153,16 +155,186 @@ h1 {
   font-size: 1.35rem;
 }
 
+/* Scene stack (index-2.html): slide + fade between license and plans */
+.appSceneShell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  height: var(--app-viewport-stable-height, 100dvh);
+  overflow: hidden;
+}
+
+.licenseScene {
+  --scene-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(24px);
+  transition:
+    opacity 0.38s var(--scene-ease),
+    transform 0.38s var(--scene-ease),
+    visibility 0.38s;
+}
+
+.licenseScene.isActive {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.licenseScene.isExitLeft {
+  transform: translateX(-24px);
+}
+
+/* Boot splash + welcome entrance (new-2.html) */
+.appBootSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: var(--app-bg-color);
+  background-image: var(--app-bg-image);
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+}
+
+.appBootInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.appBootLogo {
+  width: 150px;
+  height: 100px;
+  object-fit: contain;
+  display: block;
+  filter: brightness(0) invert(1)
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.18))
+    drop-shadow(0 0 34px rgba(227, 193, 104, 0.1));
+  animation: licenseLogoFloat 5s ease-in-out infinite;
+}
+
+.appBootName {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+  opacity: 0;
+  animation: licenseFadeIn 0.6s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes licenseLogoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes licenseLogoPop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes licenseFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes licenseFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.licenseScene.isActive .licenseAnim {
+  animation: licenseFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.licenseScene.isActive .licensePanel > .licenseAnim:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.licenseScene.isActive .licensePanel > .licenseAnim:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.appWithEnter .dashRoot {
+  animation: licenseFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Dashboard fills viewport — no legacy .app padding strip above header */
+.app.appWithEnter {
+  padding: 0;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.appWithEnter .dashAnim {
+  animation: licenseFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.appWithEnter .dashAnim:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.appWithEnter .dashAnim:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.appWithEnter .dashAnim:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.appWithEnter .dashAnim:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.appWithEnter .dashAnim:nth-child(5) {
+  animation-delay: 0.28s;
+}
+
 /* License access page */
 .licenseRoot {
   flex: 1;
   min-height: 0;
   width: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   background: transparent;
-  padding: calc(8px + var(--safe-area-top)) calc(1rem + var(--safe-area-right))
+  padding: calc(24px + var(--safe-area-top)) calc(1rem + var(--safe-area-right))
     calc(1rem + var(--safe-area-bottom)) calc(1rem + var(--safe-area-left));
   box-sizing: border-box;
   overflow-y: auto;
@@ -179,9 +351,9 @@ h1 {
 }
 
 .licenseLogoStub {
-  width: 148px;
-  height: 148px;
-  margin: 0 auto 8px;
+  width: 150px;
+  height: 100px;
+  margin: 0 auto 14px;
 }
 
 .licenseLogoImg {
@@ -189,7 +361,10 @@ h1 {
   height: 100%;
   object-fit: contain;
   display: block;
-  filter: brightness(0) invert(1) drop-shadow(0 0 18px rgba(255, 255, 255, 0.28));
+  filter: brightness(0) invert(1)
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.18))
+    drop-shadow(0 0 34px rgba(227, 193, 104, 0.1));
+  animation: licenseLogoFloat 5s ease-in-out infinite;
 }
 
 .licenseLogoLetter {
@@ -206,22 +381,97 @@ h1 {
 }
 
 .licenseBrand {
-  font-size: 18px;
-  letter-spacing: 0.16em;
+  font-size: 22px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
   color: #ffffff;
   opacity: 0.96;
-  margin-bottom: 36px;
+  margin-bottom: 26px;
 }
 
-.licenseSubtitle {
-  font-size: 12px;
-  letter-spacing: 0.16em;
+.licenseForm {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.licenseFieldLabel {
+  display: block;
+  width: 84%;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.62;
-  margin-top: 32px;
-  margin-bottom: 10px;
+  color: #66666f;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.licenseGoldTxt {
+  background: linear-gradient(135deg, #f6dd93 0%, #e3c168 48%, #be9638 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.licenseDivider {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 12px 0;
+  color: #66666f;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  width: 84%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.licenseDivider::before,
+.licenseDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.licenseTrust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.licenseTrustItem {
+  text-align: center;
+}
+
+.licenseTrustNum {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.licenseTrustLbl {
+  font-size: 9.5px;
+  color: #66666f;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.licenseTrustSep {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
 }
 
 .licenseRow {
@@ -364,12 +614,12 @@ h1 {
 
 .licenseRowPrimary {
   width: 84%;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
-.licenseRowSecondary {
+.licenseRowBuy {
   width: 84%;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .licenseInput {
@@ -377,7 +627,7 @@ h1 {
   height: 48px;
   box-sizing: border-box;
   margin: 0;
-  border-radius: 24px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: linear-gradient(
     180deg,
@@ -450,8 +700,8 @@ button.licenseBtn {
 
 .licenseBtn {
   width: 100%;
-  height: 48px;
-  border-radius: 12px;
+  min-height: 48px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   cursor: pointer;
   font-size: 13px;
@@ -473,6 +723,7 @@ button.licenseBtn {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   background: linear-gradient(
     110deg,
     transparent 35%,
@@ -484,76 +735,101 @@ button.licenseBtn {
   pointer-events: none;
 }
 
+.licenseBtn > * {
+  position: relative;
+  z-index: 1;
+}
+
 .licenseBtn:active:not(:disabled):not(.licenseBtnBlocked) {
   transform: scale(0.98);
 }
 
 .licenseBtnPrimary {
-  background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 50%, #dddddd 100%);
-  border-color: rgba(255, 255, 255, 0.72);
-  color: #111111;
+  background: #ffffff;
+  border-color: transparent;
+  color: #0a0a0a;
   text-shadow: none;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset,
-    0 8px 18px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 14px;
+  height: auto;
+  min-height: 48px;
+  padding: 14px 16px;
+  border-radius: 14px;
 }
 
 .licenseBtn.licenseBtnPrimary,
-.licenseBtn.licenseBtnPrimary .licenseBtnLabel,
-.licenseBtn.licenseBtnPrimary .licenseBtnArrow {
-  color: #111111;
+.licenseBtn.licenseBtnPrimary .licenseBtnLabel {
+  color: #0a0a0a;
 }
 
-.licenseBtnSecondary {
-  background: linear-gradient(180deg, #171717 0%, #090909 100%);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #f4f4f4;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.14);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 12px 24px rgba(0, 0, 0, 0.52);
+.licenseBtnGold {
+  background: linear-gradient(135deg, #f6dd93 0%, #e3c168 48%, #be9638 100%);
+  border: none;
+  color: #1a1305;
+  text-shadow: none;
+  box-shadow: 0 8px 24px -10px rgba(227, 193, 104, 0.5);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 14px;
+  height: auto;
+  min-height: 48px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+button.licenseBtn.licenseBtnGold,
+.licenseBtnGold .licenseBtnLabel,
+.licenseBtnGold .licenseBtnIconSvg {
+  color: #1a1305;
+}
+
+.licenseBtnGold::after {
+  background: linear-gradient(
+    110deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 58%
+  );
+  background-size: 180% 100%;
 }
 
 .licenseBtnPrimary:hover:not(:disabled):not(.licenseBtnBlocked),
-.licenseBtnSecondary:hover:not(:disabled):not(.licenseBtnBlocked) {
+.licenseBtnGold:hover:not(:disabled):not(.licenseBtnBlocked) {
   transform: translateY(-1px);
 }
 
 .licenseBtnPrimary:hover:not(:disabled):not(.licenseBtnBlocked) {
-  border-color: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset,
-    0 10px 20px rgba(0, 0, 0, 0.34);
+  background: #f7f7f7;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
 }
 
-.licenseBtnSecondary:hover:not(:disabled):not(.licenseBtnBlocked) {
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset,
-    0 12px 22px rgba(0, 0, 0, 0.48);
+.licenseBtnGold:hover:not(:disabled):not(.licenseBtnBlocked) {
+  box-shadow: 0 10px 26px -8px rgba(227, 193, 104, 0.58);
 }
 
 .licenseBtnLabel {
   flex: 0 0 auto;
 }
 
-.licenseBtnArrow {
-  position: absolute;
-  right: 14px;
-  font-size: 13px;
-  font-weight: 400;
-  opacity: 0.62;
-  line-height: 1;
-}
-
-.licenseBtnIcon {
+.licenseBtnArrowSvg {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
+  opacity: 0.85;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.licenseBtnIcon svg {
-  width: 100%;
-  height: 100%;
+.licenseBtnPrimary:active:not(:disabled):not(.licenseBtnBlocked) .licenseBtnArrowSvg {
+  transform: translateX(3px);
+}
+
+.licenseBtnIconSvg {
+  flex: 0 0 auto;
+  display: block;
 }
 
 .licenseBtnSpinner {
@@ -691,6 +967,7 @@ button.licenseBtn {
   }
 
   .licenseBtn::after,
+  .licenseBtnGold::after,
   .dashModalBtn::after,
   .dashConnectSubmitBtn::after,
   .dashConnectEditCancel::after,
@@ -740,9 +1017,12 @@ button.licenseBtn {
 }
 
 .dashRoot {
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: stretch;
   padding: 0;
   overflow: hidden;
   background: transparent;
@@ -759,8 +1039,9 @@ button.licenseBtn {
 
 .dashShell {
   width: 100%;
-  max-width: 390px;
-  height: 100vh;
+  max-width: 460px;
+  height: 100%;
+  min-height: 0;
   position: relative;
   font-family: inherit;
 }

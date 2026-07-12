@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "./api.js";
 import {
   applyTelegramViewportCss,
@@ -17,17 +18,133 @@ const PURCHASE_TIER = "elite";
 export const TIER_PLANS = {
   elite: {
     id: "elite",
-    label: "PHASE ELITE",
+    label: "PHASE GOLD",
+    ctaLabel: "Get Phase Gold",
     price: 249,
-    note: "Full access · XAUUSD trading robot",
+    note: "Full automated trading, around the clock",
     features: [
       "XAUUSD trading robot access",
-      "RSI grid with progressive lot",
-      "Priority execution profile",
+      "Advanced gold strategies",
+      "Smart risk management",
+      "Priority trade execution",
     ],
-    badge: null,
+    badge: "Best offer",
   },
 };
+
+/** Screenshots in public/results/ — filename (without .jpg) = profit in USD. */
+const RESULT_PROFIT_USD = [
+  5387, 1837, 1514, 804, 660, 603, 581, 529, 480, 336,
+];
+
+const RESULTS = RESULT_PROFIT_USD.map((usd) => ({
+  id: String(usd),
+  profit: `+$${usd.toLocaleString("en-US")}`,
+  img: `/results/${usd}.jpg`,
+}));
+
+function ResultsCarousel() {
+  const [index, setIndex] = useState(0);
+  const touchStartX = useRef(null);
+  const viewportRef = useRef(null);
+
+  const goPrev = useCallback(() => {
+    setIndex((i) => Math.max(0, i - 1));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setIndex((i) => Math.min(RESULTS.length - 1, i + 1));
+  }, []);
+
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return undefined;
+
+    function onTouchStart(e) {
+      touchStartX.current = e.touches[0].clientX;
+    }
+
+    function onTouchEnd(e) {
+      if (touchStartX.current === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      if (dx < -40) goNext();
+      else if (dx > 40) goPrev();
+      touchStartX.current = null;
+    }
+
+    vp.addEventListener("touchstart", onTouchStart, { passive: true });
+    vp.addEventListener("touchend", onTouchEnd);
+    return () => {
+      vp.removeEventListener("touchstart", onTouchStart);
+      vp.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [goNext, goPrev]);
+
+  return (
+    <>
+      <div className="subUpgCarousel">
+        <button
+          type="button"
+          className="subUpgCarArrow subUpgCarArrowLeft"
+          onClick={goPrev}
+          disabled={index === 0}
+          aria-label="Previous"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div className="subUpgCarViewport" ref={viewportRef}>
+          <div
+            className="subUpgCarTrack"
+            style={{ transform: `translateX(-${index * 100}%)` }}
+          >
+            {RESULTS.map((item) => (
+              <div className="subUpgCarSlide" key={item.id}>
+                <div className="subUpgResultShot">
+                  <div className="subUpgResultPill">{item.profit}</div>
+                  {item.img ? (
+                    <img src={item.img} alt="" className="subUpgResultImg" />
+                  ) : (
+                    <div className="subUpgResultPh">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 15l5-5 4 4 3-3 6 6" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                      </svg>
+                      <span>Your result screenshot goes here</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="subUpgCarArrow subUpgCarArrowRight"
+          onClick={goNext}
+          disabled={index === RESULTS.length - 1}
+          aria-label="Next"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+      <div className="subUpgCarFoot">
+        <div className="subUpgCarDots" aria-hidden="true">
+          {RESULTS.map((item, i) => (
+            <i key={item.id} className={i === index ? "on" : ""} />
+          ))}
+        </div>
+        <div className="subUpgCarCount">
+          {index + 1} / {RESULTS.length}
+        </div>
+      </div>
+    </>
+  );
+}
 
 function planPrice(tierId, priceOverrides) {
   const p = priceOverrides?.[tierId]?.price_usdt;
@@ -164,39 +281,34 @@ export function ProfileSubscriptionCard({
   const tier = String(currentTier || "elite").toLowerCase();
 
   return (
-    <div className="profileSubCard">
-      <div className="profileSubCardHead">
-        <span className="profileSubCardTitle">Subscription</span>
+    <div className="refCard refCardGold">
+      <div className="refCard-h">
+        <span className="refCard-t">Subscription</span>
         {hasActiveAccess ? (
-          <span className="profileSubBadge">
+          <span className="badge-status live">
             <span className="dot" />
             Active
           </span>
         ) : (
-          <span className="profileSubBadge" style={{ color: "#9494a0" }}>
+          <span className="badge-status">
+            <span className="dot" />
             Inactive
           </span>
         )}
       </div>
-      <div className="profileSubRow">
-        <span className="profileSubRowK">Plan</span>
-        <span className="profileSubRowV subUpgGoldTxt">
-          {tierLabel || plan.label}
-        </span>
+      <div className="refTr">
+        <span className="refTr-k">Plan</span>
+        <span className="refTr-v refGoldTxt">{tierLabel || plan.label}</span>
       </div>
-      <div className="profileSubRow">
-        <span className="profileSubRowK">Price</span>
-        <span className="profileSubRowV">${plan.price} / month</span>
+      <div className="refTr">
+        <span className="refTr-k">Price</span>
+        <span className="refTr-v">${plan.price} / month</span>
       </div>
-      <div className="profileSubRow">
-        <span className="profileSubRowK">Valid until</span>
-        <span className="profileSubRowV">{formatExpiry(accessExpiresAt)}</span>
+      <div className="refTr">
+        <span className="refTr-k">Valid until</span>
+        <span className="refTr-v">{formatExpiry(accessExpiresAt)}</span>
       </div>
-      <button
-        type="button"
-        className="subUpgBtnGold profileSubUpgradeBtn"
-        onClick={onUpgrade}
-      >
+      <button type="button" className="refBtn refBtnGold" onClick={onUpgrade}>
         Renew plan
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
           <path d="M5 12h14M13 6l6 6-6 6" />
@@ -206,6 +318,8 @@ export function ProfileSubscriptionCard({
   );
 }
 
+const SCENE_TRANSITION_MS = 420;
+
 export default function SubscriptionUpgradeFlow({
   open,
   onClose,
@@ -213,8 +327,11 @@ export default function SubscriptionUpgradeFlow({
   onRedeemCode,
   onEnsureAuth,
   onPaymentComplete,
+  presentation = "overlay",
 }) {
   const [scene, setScene] = useState("plans");
+  const [present, setPresent] = useState(false);
+  const [scenePhase, setScenePhase] = useState("hidden");
   const [selectedTier, setSelectedTier] = useState(null);
   const [txHash, setTxHash] = useState("");
   const [hashErr, setHashErr] = useState(false);
@@ -244,7 +361,7 @@ export default function SubscriptionUpgradeFlow({
     verifyTimers.current.forEach(clearTimeout);
     verifyTimers.current = [];
     pollCancelRef.current = true;
-    setScene("checkout");
+    setScene("plans");
     setSelectedTier(PURCHASE_TIER);
     setTxHash("");
     setHashErr(false);
@@ -264,13 +381,10 @@ export default function SubscriptionUpgradeFlow({
   }, []);
 
   useEffect(() => {
-    if (!open) {
-      reset();
-      return;
-    }
+    if (!open) return undefined;
     pollCancelRef.current = false;
     setSelectedTier(PURCHASE_TIER);
-    setScene("checkout");
+    setScene("plans");
     api
       .paymentsConfig()
       .then((cfg) => {
@@ -282,19 +396,51 @@ export default function SubscriptionUpgradeFlow({
         if (cfg.tiers) setTierPrices(cfg.tiers);
       })
       .catch(() => {});
-  }, [open, reset]);
+    return undefined;
+  }, [open]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (open) setPresent(true);
+  }, [open]);
+
+  useEffect(() => {
+    if (!present || !open) return undefined;
+    setScenePhase("entering");
+    let frame2 = 0;
+    const frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => setScenePhase("active"));
+    });
+    return () => {
+      cancelAnimationFrame(frame1);
+      if (frame2) cancelAnimationFrame(frame2);
+    };
+  }, [present, open]);
+
+  useEffect(() => {
+    if (open || !present) return undefined;
+    setScenePhase("exiting");
+    const timer = setTimeout(() => {
+      setPresent(false);
+      setScenePhase("hidden");
+    }, SCENE_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [open, present]);
+
+  useEffect(() => {
+    if (!present) reset();
+  }, [present, reset]);
+
+  useEffect(() => {
+    if (!present) return undefined;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [present]);
 
   useEffect(() => {
-    if (!open) {
+    if (!present) {
       setKeyboardOpen(false);
       return undefined;
     }
@@ -315,7 +461,7 @@ export default function SubscriptionUpgradeFlow({
       window.removeEventListener("resize", syncViewport);
       vv?.removeEventListener("resize", syncViewport);
     };
-  }, [open]);
+  }, [present]);
 
   useEffect(() => {
     if (scene === "success" && confettiRef.current) {
@@ -323,7 +469,7 @@ export default function SubscriptionUpgradeFlow({
     }
   }, [scene]);
 
-  if (!open) return null;
+  if (!present) return null;
 
   const plan = TIER_PLANS[PURCHASE_TIER];
   const checkoutPrice = planPrice(PURCHASE_TIER, tierPrices);
@@ -503,6 +649,10 @@ export default function SubscriptionUpgradeFlow({
       setScene("checkout");
       return;
     }
+    if (scene === "checkout" || scene === "results") {
+      setScene("plans");
+      return;
+    }
     if (scene === "success") {
       onClose?.();
       return;
@@ -512,22 +662,45 @@ export default function SubscriptionUpgradeFlow({
 
   const ringOffset = 295 - (295 * ringPct) / 100;
 
-  return (
+  const overlay = (
     <div
-      className={`subUpgOverlay${keyboardOpen ? " subUpgKeyboardOpen" : ""}`}
+      className={[
+        "subUpgOverlay",
+        presentation === "scene" && "subUpgOverlayScene",
+        scenePhase === "active" && "isActive",
+        scenePhase === "exiting" && "isExitLeft",
+        keyboardOpen && "subUpgKeyboardOpen",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="dialog"
       aria-modal="true"
     >
       <div className="subUpgShell">
-        <div className="subUpgHdr">
-          <span className="subUpgHdrTitle">
-            {scene === "checkout" && "Checkout"}
-            {scene === "verify" && "Verification"}
-            {scene === "success" && "Confirmed"}
-            {scene === "failed" && "Payment"}
-          </span>
+        <div className={`subUpgHdr${scene === "plans" || scene === "results" ? " subUpgHdrPlans" : ""}`}>
+          {scene === "plans" || scene === "results" ? (
+            scene === "results" ? (
+              <div className="subUpgHdrLeft">
+                <div className="subUpgHdrLogo" aria-hidden="true">
+                  <img src="/logo.png" alt="" className="subUpgHdrLogoImg" />
+                </div>
+                <span className="subUpgHdrName">Results</span>
+              </div>
+            ) : (
+              <div className="subUpgHdrLogo" aria-hidden="true">
+                <img src="/logo.png" alt="" className="subUpgHdrLogoImg" />
+              </div>
+            )
+          ) : (
+            <span className="subUpgHdrTitle">
+              {scene === "checkout" && "Checkout"}
+              {scene === "verify" && "Verification"}
+              {scene === "success" && "Confirmed"}
+              {scene === "failed" && "Payment"}
+            </span>
+          )}
           <button type="button" className="subUpgBack" onClick={back}>
-            {scene === "checkout" || scene === "verify" ? (
+            {scene === "verify" ? (
               <>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
                   <path d="M6 6l12 12M18 6L6 18" />
@@ -544,6 +717,90 @@ export default function SubscriptionUpgradeFlow({
             )}
           </button>
         </div>
+
+        {scene === "plans" && plan && (
+          <div className="subUpgScroll">
+            <div className="subUpgPlansHead subUpgAnim">
+              <h2 className="subUpgPlansTitle">Choose your plan</h2>
+              <p className="subUpgPlansSub">Monthly subscription</p>
+            </div>
+            <div className="subUpgPlan subUpgAnim">
+              {plan.badge ? (
+                <span className="subUpgPlanBadge">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2l2.6 6.3L21 9l-5 4.5L17.5 21 12 17.3 6.5 21 8 13.5 3 9l6.4-.7z" />
+                  </svg>
+                  {plan.badge}
+                </span>
+              ) : null}
+              <div className="subUpgPlanName subUpgGoldTxt">{plan.label}</div>
+              <div className="subUpgPlanPrice">
+                <b>${checkoutPrice}</b>
+                <span>/ month</span>
+              </div>
+              <div className="subUpgPlanNote">{plan.note}</div>
+              <div className="subUpgPlanFeats">
+                {plan.features.map((feat) => (
+                  <div className="subUpgFeat" key={feat}>
+                    <span className="subUpgFeatChk" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M5 12l5 5L20 6" />
+                      </svg>
+                    </span>
+                    {feat}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="subUpgBtnGold subUpgPlanCta"
+                onClick={() => setScene("checkout")}
+              >
+                {plan.ctaLabel}
+                <svg
+                  className="subUpgPlanCtaArrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="subUpgBtnPlanGhost"
+                onClick={() => setScene("results")}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M3 3v18h18" />
+                  <path d="M7 14l4-4 3 3 5-6" />
+                </svg>
+                View results
+              </button>
+              <div className="subUpgSocial">
+                <div className="subUpgAvatars" aria-hidden="true">
+                  <span>A</span>
+                  <span>M</span>
+                  <span>D</span>
+                  <span>+</span>
+                </div>
+                <div className="subUpgSocialTxt">
+                  <b>47 traders</b> joined today
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {scene === "results" && (
+          <div className="subUpgResultsWrap">
+            <ResultsCarousel />
+          </div>
+        )}
 
         {scene === "checkout" && plan && (
           <div className="subUpgScroll" ref={scrollRef}>
@@ -825,4 +1082,7 @@ export default function SubscriptionUpgradeFlow({
       </div>
     </div>
   );
+
+  if (presentation === "scene") return overlay;
+  return createPortal(overlay, document.body);
 }

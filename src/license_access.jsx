@@ -53,8 +53,10 @@ export default function LicenseAccess({ onActivate, onBuyClick }) {
         <div className="licenseLogoStub" aria-hidden="true">
           <img src="/logo.png" alt="Phase Trade Robot" className="licenseLogoImg" />
         </div>
-        <div className="licenseBrand">PHASE TRADE ROBOT</div>
-        <div className="licenseSubtitle">LICENSE ACCESS</div>
+        <div className="licenseBrand licenseAnim">PHASE TRADE ROBOT</div>
+
+        <div className="licenseForm licenseAnim">
+        <span className="licenseFieldLabel">License access</span>
 
         <div
           className={`licenseRow licenseRowInput${loading ? " licenseRowInputVerifying" : ""}`}
@@ -106,33 +108,69 @@ export default function LicenseAccess({ onActivate, onBuyClick }) {
               </>
             ) : (
               <>
-                <span className="licenseBtnLabel">ACTIVATE</span>
-                <span className="licenseBtnArrow">→</span>
+                <span className="licenseBtnLabel">Activate</span>
+                <svg
+                  className="licenseBtnArrowSvg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
               </>
             )}
           </button>
         </div>
 
-        <div className="licenseRow licenseRowSecondary">
+        <div className="licenseDivider" aria-hidden="true">
+          OR
+        </div>
+
+        <div className="licenseRow licenseRowBuy">
           <button
             type="button"
-            className={`licenseBtn licenseBtnSecondary${loading ? " licenseBtnBlocked" : ""}`}
+            className={`licenseBtn licenseBtnGold${loading ? " licenseBtnBlocked" : ""}`}
             disabled={loading}
             onClick={() => {
               if (!loading) onBuyClick?.();
             }}
           >
-            <span className="licenseBtnIcon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M7 9V7a5 5 0 0 1 10 0v2h1.2a1.8 1.8 0 0 1 1.8 1.8l-0.7 8.2A2 2 0 0 1 17.3 21H6.7a2 2 0 0 1-2-2L4 10.8A1.8 1.8 0 0 1 5.8 9H7zm2 0h6V7a3 3 0 0 0-6 0v2z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            <span className="licenseBtnLabel">BUY LICENSE KEY</span>
-            <span className="licenseBtnArrow">→</span>
+            <svg
+              className="licenseBtnIconSvg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <rect x="4" y="11" width="16" height="10" rx="2.5" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            <span className="licenseBtnLabel">Buy license</span>
           </button>
+        </div>
+
+        <div className="licenseTrust" aria-hidden="true">
+          <div className="licenseTrustItem">
+            <div className="licenseTrustNum licenseGoldTxt">400+</div>
+            <div className="licenseTrustLbl">Traders</div>
+          </div>
+          <div className="licenseTrustSep" />
+          <div className="licenseTrustItem">
+            <div className="licenseTrustNum licenseGoldTxt">24/5</div>
+            <div className="licenseTrustLbl">Market</div>
+          </div>
+          <div className="licenseTrustSep" />
+          <div className="licenseTrustItem">
+            <div className="licenseTrustNum licenseGoldTxt">XAUUSD</div>
+            <div className="licenseTrustLbl">Automation</div>
+          </div>
         </div>
 
         {err ? (
@@ -156,6 +194,7 @@ export default function LicenseAccess({ onActivate, onBuyClick }) {
           </div>
         ) : null}
 
+        </div>
       </div>
     </div>
   );
