@@ -9,9 +9,20 @@ import {
 import "./subscription_upgrade.css";
 
 const DEFAULT_CHECKOUT = {
-  wallet: "TGfxMFAXrcWQfHBFEguC428ncVzh69PrBt",
+  wallet: "",
   network: "TRC-20",
 };
+
+function applyPaymentsConfig(cfg, setCheckout, setTierPrices) {
+  if (!cfg) return;
+  if (cfg.wallet) {
+    setCheckout({
+      wallet: cfg.wallet,
+      network: cfg.network || DEFAULT_CHECKOUT.network,
+    });
+  }
+  if (cfg.tiers) setTierPrices(cfg.tiers);
+}
 
 const PURCHASE_TIER = "elite";
 
@@ -349,6 +360,7 @@ export default function SubscriptionUpgradeFlow({
   const [paymentDone, setPaymentDone] = useState(false);
   const [failReason, setFailReason] = useState("");
   const [checkout, setCheckout] = useState(DEFAULT_CHECKOUT);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [tierPrices, setTierPrices] = useState(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const verifyTimers = useRef([]);
@@ -378,6 +390,19 @@ export default function SubscriptionUpgradeFlow({
     setActivating(false);
     setPaymentDone(false);
     setFailReason("");
+    setCheckout(DEFAULT_CHECKOUT);
+  }, []);
+
+  const loadCheckoutConfig = useCallback(async () => {
+    setCheckoutLoading(true);
+    try {
+      const cfg = await api.paymentsConfig();
+      applyPaymentsConfig(cfg, setCheckout, setTierPrices);
+    } catch (e) {
+      console.warn("payments/config failed", e);
+    } finally {
+      setCheckoutLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -385,19 +410,15 @@ export default function SubscriptionUpgradeFlow({
     pollCancelRef.current = false;
     setSelectedTier(PURCHASE_TIER);
     setScene("plans");
-    api
-      .paymentsConfig()
-      .then((cfg) => {
-        if (!cfg) return;
-        setCheckout({
-          wallet: cfg.wallet || DEFAULT_CHECKOUT.wallet,
-          network: cfg.network || DEFAULT_CHECKOUT.network,
-        });
-        if (cfg.tiers) setTierPrices(cfg.tiers);
-      })
-      .catch(() => {});
+    loadCheckoutConfig();
     return undefined;
-  }, [open]);
+  }, [open, loadCheckoutConfig]);
+
+  useEffect(() => {
+    if (!open || scene !== "checkout") return undefined;
+    loadCheckoutConfig();
+    return undefined;
+  }, [open, scene, loadCheckoutConfig]);
 
   useEffect(() => {
     if (open) setPresent(true);
@@ -660,8 +681,6 @@ export default function SubscriptionUpgradeFlow({
     closeFlow();
   }
 
-  const ringOffset = 295 - (295 * ringPct) / 100;
-
   const overlay = (
     <div
       className={[
@@ -825,7 +844,7 @@ export default function SubscriptionUpgradeFlow({
               </div>
             </div>
 
-            <div className={`subUpgPayBlock gold subUpgAnim${copyAmountOk ? " copied" : ""}`}>
+            <div className={`subUpgPayBlock subUpgAnim${copyAmountOk ? " copied" : ""}`}>
               <div className="subUpgPayTop">
                 <span className="subUpgPayLbl">Amount to pay</span>
                 <span className="subUpgPayNet">USDT · {checkout.network}</span>
@@ -849,11 +868,16 @@ export default function SubscriptionUpgradeFlow({
 
             <div className={`subUpgPayBlock subUpgAnim${copyAddrOk ? " copied" : ""}`}>
               <div className="subUpgPayLbl">Wallet address</div>
-              <div className="subUpgPayValue">{checkout.wallet}</div>
+              <div className="subUpgPayValue">
+                {checkoutLoading && !checkout.wallet
+                  ? "Loading wallet…"
+                  : checkout.wallet || "Wallet not configured"}
+              </div>
               <button
                 type="button"
                 className={`subUpgCopy${copyAddrOk ? " ok" : ""}`}
                 onClick={copyWallet}
+                disabled={!checkout.wallet || checkoutLoading}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -905,32 +929,34 @@ export default function SubscriptionUpgradeFlow({
         {scene === "verify" && (
           <div className="subUpgVerifyWrap">
             <div className="subUpgRing">
-              <svg width="108" height="108" viewBox="0 0 108 108">
+              <svg width="120" height="120" viewBox="0 0 120 120">
                 <defs>
                   <linearGradient id="subUpgGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="#F0D285" />
-                    <stop offset="1" stopColor="#B8923C" />
+                    <stop offset="0%" stopColor="#F6DD93" />
+                    <stop offset="50%" stopColor="#E3C168" />
+                    <stop offset="100%" stopColor="#BE9638" />
                   </linearGradient>
                 </defs>
                 <circle
-                  cx="54"
-                  cy="54"
-                  r="47"
+                  className="subUpgRingTrack"
+                  cx="60"
+                  cy="60"
+                  r="50"
                   fill="none"
-                  stroke="#222229"
-                  strokeWidth="7"
+                  strokeWidth="9"
                   strokeLinecap="round"
                 />
                 <circle
-                  cx="54"
-                  cy="54"
-                  r="47"
+                  className={`subUpgRingFg${ringFail ? " fail" : ""}`}
+                  cx="60"
+                  cy="60"
+                  r="50"
                   fill="none"
                   stroke={ringFail ? "#FF453A" : "url(#subUpgGrad)"}
-                  strokeWidth="7"
+                  strokeWidth="9"
                   strokeLinecap="round"
-                  strokeDasharray="295"
-                  strokeDashoffset={ringOffset}
+                  strokeDasharray="314"
+                  strokeDashoffset={314 - (314 * ringPct) / 100}
                   style={{ transition: "stroke-dashoffset 1s linear" }}
                 />
               </svg>
@@ -944,10 +970,36 @@ export default function SubscriptionUpgradeFlow({
             </div>
             <div className="subUpgVSteps">
               {[
-                ["Transaction broadcast", "Looking up hash on TRON network"],
-                ["Block confirmation", "Waiting for block confirmations"],
-                ["License activation", "Activating your subscription"],
-              ].map(([name, defaultMeta], i) => {
+                {
+                  name: "Transaction broadcast",
+                  defaultMeta: "Sent to TRON network",
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Block confirmation",
+                  defaultMeta: "Awaiting confirmations",
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path d="M9 9h6v6H9z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "License activation",
+                  defaultMeta: "Linking to your account",
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M9 12l2 2 4-4" />
+                    </svg>
+                  ),
+                },
+              ].map((step, i) => {
                 const st = vSteps[i];
                 const cls =
                   st === 3 ? " fail" : st === 2 ? " ok" : st === 1 ? " on" : "";
@@ -964,12 +1016,12 @@ export default function SubscriptionUpgradeFlow({
                         : i === 1
                           ? "Awaiting confirmations..."
                           : "Applying license key..."
-                      : defaultMeta;
+                      : step.defaultMeta;
                 return (
-                  <div key={name} className={`subUpgVStep${cls}`}>
-                    <div className="subUpgVStepIco">●</div>
+                  <div key={step.name} className={`subUpgVStep${cls}`}>
+                    <div className="subUpgVStepIco">{step.icon}</div>
                     <div className="subUpgVStepTxt">
-                      <div className="subUpgVStepName">{name}</div>
+                      <div className="subUpgVStepName">{step.name}</div>
                       <div className="subUpgVStepMeta">{meta}</div>
                     </div>
                     <div className="subUpgMiniSpin" />

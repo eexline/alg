@@ -840,13 +840,7 @@
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
-.subUpgPayBlock.gold {
-  background: linear-gradient(150deg, #191510, #101015);
-  border-color: rgba(217, 182, 90, 0.26);
-}
-
-.subUpgPayBlock.copied,
-.subUpgPayBlock.gold.copied {
+.subUpgPayBlock.copied {
   border-color: #e3c168;
   background: rgba(227, 193, 104, 0.11);
   box-shadow: 0 6px 22px -10px rgba(227, 193, 104, 0.45);
@@ -1028,14 +1022,24 @@
 }
 
 .subUpgRing {
-  width: 108px;
-  height: 108px;
+  width: 120px;
+  height: 120px;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+  filter: drop-shadow(0 0 18px rgba(227, 193, 104, 0.22));
 }
 
 .subUpgRing svg {
   transform: rotate(-90deg);
+  display: block;
+}
+
+.subUpgRingTrack {
+  stroke: #2a2a33;
+}
+
+.subUpgRingFg {
+  filter: drop-shadow(0 0 6px rgba(246, 221, 147, 0.55));
 }
 
 .subUpgRingPct {
@@ -1045,7 +1049,9 @@
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 23px;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  color: #fff;
 }
 
 .subUpgRingPct.fail {
@@ -1092,9 +1098,8 @@
   background: #191920;
 }
 
-.subUpgVStep.ok .subUpgVStepIco {
-  background: rgba(52, 199, 89, 0.13);
-  color: #34c759;
+.subUpgVStep.ok {
+  opacity: 1;
 }
 
 .subUpgVStep.fail {
@@ -1114,9 +1119,25 @@
   color: #62626e;
 }
 
+.subUpgVStepIco svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
 .subUpgVStep.on .subUpgVStepIco {
-  background: rgba(217, 182, 90, 0.1);
-  color: #f0d285;
+  background: rgba(227, 193, 104, 0.14);
+  color: #f6dd93;
+}
+
+.subUpgVStep.ok .subUpgVStepIco {
+  background: rgba(52, 199, 89, 0.13);
+  color: #34c759;
+}
+
+.subUpgVStep.fail .subUpgVStepIco {
+  background: rgba(255, 69, 58, 0.14);
+  color: #ff453a;
 }
 
 .subUpgVStepTxt {
